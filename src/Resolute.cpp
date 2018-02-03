@@ -26,35 +26,14 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
+#include <nlohmann/json.hpp>
 
 #include "EnvironmentInfo.h"
-#include "ParamSkeleton.h"
+#include "ParamSkeleton.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
-
-void WriteJSONSkeleton(const fs::path &outFile){
-
-  std::string dst = outFile.string();
-  boost::algorithm::replace_all(dst, "\"", "");
-
-  if (fs::exists(dst)){
-    std::cerr << "ERROR: JSON config. file already exists!" << std::endl;
-    std::cerr << "ERROR: Refusing to overwrite!" << std::endl;
-    throw false;
-  }
-
-  std::ofstream file(dst);
-
-  if (!file){
-    std::cerr << "ERROR: Cannot open output file for writing!" << std::endl; 
-    throw false;
-  }
-
-  file << skeleton.dump(4);
-  file.close();
-
-}
+using json = nlohmann::json;
 
 int main(int argc, char **argv)
 {
@@ -62,6 +41,7 @@ int main(int argc, char **argv)
   const char* APP_NAME = "resolute";
 
   std::string inputDirectoryPath;
+  std::string logPath;
   std::string jsonFile;
   std::string outputDirectory;
   std::string prefixName;
@@ -73,7 +53,8 @@ int main(int argc, char **argv)
     ("version","Print version number")
     //("verbose,v", "Be verbose")
     ("input,i", po::value<std::string>(&inputDirectoryPath), "Input DICOMDIR")
-    ("log,l", "Write log file")
+    ("log,l", po::value<std::string>(&logPath), "Write log file")
+    ("json,j", po::value<std::string>(&jsonFile),  "Use JSON config file")
     ("create-json", po::value<std::string>(&jsonFile),  "Write config JSON skeleton");
 
 
@@ -106,7 +87,7 @@ int main(int argc, char **argv)
 
   if (vm.count("create-json") ) {
     try {
-      WriteJSONSkeleton(jsonFile);
+      ns::WriteJSONSkeleton(jsonFile);
     } catch (bool) {
       std::cerr << "ERROR: Aborting!" << std::endl;
       return EXIT_FAILURE;
@@ -114,29 +95,42 @@ int main(int argc, char **argv)
     return EXIT_SUCCESS;
   }
 
-  //Configure logging
-  fs::path logPath = fs::complete(fs::current_path());
-  logPath /= APP_NAME;
-  logPath += "-";
+  std::ifstream ifs(jsonFile);
+  json paramFile = json::parse(ifs);
 
   //Pretty coloured logging (if supported)
   FLAGS_colorlogtostderr = 1;
+  FLAGS_alsologtostderr = 1;
 
   if (vm.count("log")){
-    FLAGS_alsologtostderr = 1;
-  }
-  else {
-    FLAGS_logtostderr = 1;
+    paramFile["logDir"] = logPath;
   }
 
+  DLOG(INFO) << paramFile;
+  
+  try {
+    ns::ValidateJSON(paramFile);
+  } catch(bool) {
+    LOG(ERROR) << "Invalid JSON file!";
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;
+  }
+
+  //Configure logging
+  fs::path newLogPath = fs::complete(paramFile["logDir"].get<std::string>());
+  newLogPath /= APP_NAME;
+  newLogPath += "-";
+
   google::InitGoogleLogging(argv[0]);
-  google::SetLogDestination(google::INFO, logPath.string().c_str());
+  google::SetLogDestination(google::INFO, newLogPath.string().c_str());
 
   std::time_t startTime = std::time( 0 ) ;
 
   //Application starts here
   LOG(INFO) << "Started: " << std::asctime(std::localtime(&startTime));
   LOG(INFO) << "Running '" << APP_NAME << "' version: " << VERSION_NO;
+  LOG(INFO) << "Log path = " << newLogPath;
+  LOG(INFO) << "Read JSON parameter file: " << jsonFile << std::endl << paramFile.dump(4);
 
   fs::path srcPath = inputDirectoryPath;
   
