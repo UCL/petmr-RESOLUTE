@@ -1,5 +1,5 @@
 /*
-   ParamSkeleton.h
+   ParamSkeleton.hpp
 
    Author:      Benjamin A. Thomas
 
@@ -20,10 +20,11 @@
 
 #pragma once
 
-#ifndef _PARAMSKELETON_H_
-#define _PARAMSKELETON_H_ 
+#ifndef _PARAMSKELETON_HPP_
+#define _PARAMSKELETON_HPP_ 
 
 #include <nlohmann/json.hpp>
+#include <glog/logging.h>
 
 namespace ns {
 
@@ -101,11 +102,11 @@ namespace ns {
 
     "./logs",
 
-    "MRAC",
+    "UMAP",
     "UTE",
-    0.1,
+    0.07,
     "UTE",
-    0.1,
+    2.46,
 
     "ANTS",
     "",

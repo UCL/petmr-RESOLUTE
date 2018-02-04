@@ -30,6 +30,7 @@
 
 #include "EnvironmentInfo.h"
 #include "ParamSkeleton.hpp"
+#include "ExtractDicomImages.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -75,6 +76,12 @@ int main(int argc, char **argv)
     if (vm.count("version") ) {
       std::cout << APP_NAME << " : v" << VERSION_NO << std::endl;
       return EXIT_SUCCESS;
+    }
+
+    if ( (!vm.count("input")) && (!vm.count("create-json")) ){
+      std::cout << APP_NAME << std::endl
+        << desc << std::endl;
+      return EXIT_SUCCESS;   
     }
 
     po::notify(vm); // throws on error
@@ -149,6 +156,8 @@ int main(int argc, char **argv)
   }
 
   LOG(INFO) << "Input directory: " << fs::complete(srcPath);
+
+  std::unique_ptr<dcm::UTETree> tree(new dcm::UTETree(srcPath));
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;
