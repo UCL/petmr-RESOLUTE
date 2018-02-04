@@ -40,9 +40,9 @@ namespace ns {
 
     std::string MRACSeriesName;
     std::string UTE1SeriesName;
-    double UTE1TR;
+    std::string UTE1TE;
     std::string UTE2SeriesName;
-    double UTE2TR;
+    std::string UTE2TE;
 
     std::string regName;
     boost::filesystem::path regTemplatePath;
@@ -62,9 +62,9 @@ namespace ns {
 
         {"MRACSeriesName", p.MRACSeriesName},
         {"UTE1SeriesName", p.UTE1SeriesName},
-        {"UTE1TR", p.UTE1TR},
+        {"UTE1TE", p.UTE1TE},
         {"UTE2SeriesName", p.UTE2SeriesName},
-        {"UTE2TR", p.UTE2TR},
+        {"UTE2TE", p.UTE2TE},
 
         {"regName", p.regName},
         {"regTemplatePath", p.regTemplatePath.string()},
@@ -83,9 +83,9 @@ namespace ns {
 
     p.MRACSeriesName = j.at("MRACSeriesName").get<std::string>();
     p.UTE1SeriesName = j.at("UTE1SeriesName").get<std::string>();
-    p.UTE1TR = j.at("UTE1TR").get<double>();    
+    p.UTE1TE = j.at("UTE1TE").get<std::string>();   
     p.UTE2SeriesName = j.at("UTE2SeriesName").get<std::string>();
-    p.UTE2TR = j.at("UTE2TR").get<double>();    
+    p.UTE2TE = j.at("UTE2TE").get<std::string>();    
 
     p.regName = j.at("regName").get<std::string>();
     p.regTemplatePath = j.at("regTemplatePath").get<std::string>();
@@ -102,11 +102,11 @@ namespace ns {
 
     "./logs",
 
-    "UMAP",
-    "UTE",
-    0.07,
-    "UTE",
-    2.46,
+    "Head_MRAC_PET_UTE_UMAP",
+    "Head_MRAC_PET_UTE",
+    "0.07",
+    "Head_MRAC_PET_UTE_UMAP",
+    "2.46",
 
     "ANTS",
     "",

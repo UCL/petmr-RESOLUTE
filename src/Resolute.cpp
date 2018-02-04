@@ -157,7 +157,24 @@ int main(int argc, char **argv)
 
   LOG(INFO) << "Input directory: " << fs::complete(srcPath);
 
+  //Create DICOM UTE search object.
   std::unique_ptr<dcm::UTETree> tree(new dcm::UTETree(srcPath));
+
+  //Total number of series found for first UID.
+  LOG(INFO) << "No. series in tree: " << tree->GetNoOfSeries(tree->GetStudyUID(1));
+
+  //Get all Series UIDs associated with study
+  //std::vector<std::string> foundSeriesUIDs = tree->GetSeriesUIDList(tree->GetStudyUID(1));
+
+  //Find the mu-map
+  tree->FindMuMapUID(tree->GetStudyUID(1), paramFile["MRACSeriesName"]);
+
+  //Find UTE 1
+  tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE1SeriesName"], paramFile["UTE1TE"].get<std::string>());
+
+  //Find UTE 2
+  tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE2SeriesName"], paramFile["UTE2TE"].get<std::string>());
+
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;
