@@ -161,7 +161,8 @@ int main(int argc, char **argv)
   std::unique_ptr<dcm::UTETree> tree(new dcm::UTETree(srcPath));
 
   //Total number of series found for first UID.
-  LOG(INFO) << "No. series in tree: " << tree->GetNoOfSeries(tree->GetStudyUID(1));
+  std::string studyUID = tree->GetStudyUID(1);
+  LOG(INFO) << "No. series in tree: " << tree->GetNoOfSeries(studyUID);
 
   //Get all Series UIDs associated with study
   //std::vector<std::string> foundSeriesUIDs = tree->GetSeriesUIDList(tree->GetStudyUID(1));
@@ -172,7 +173,7 @@ int main(int argc, char **argv)
 
   try {
     //Find the mu-map
-    mumapUID = tree->FindMuMapUID(tree->GetStudyUID(1), paramFile["MRACSeriesName"]);
+    mumapUID = tree->FindMuMapUID(studyUID, paramFile["MRACSeriesName"]);
   }
   catch (bool){
     LOG(ERROR) << "Could not find mu-map series with description \'" << paramFile["MRACSeriesName"] << "\'";
@@ -182,7 +183,7 @@ int main(int argc, char **argv)
 
   try {
     //Find UTE 1
-    ute1UID = tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE1SeriesName"], paramFile["UTE1TE"].get<std::string>());
+    ute1UID = tree->FindUTEUID(studyUID, paramFile["UTE1SeriesName"], paramFile["UTE1TE"].get<std::string>());
   }
   catch (bool){
     LOG(ERROR) << "Could not find UTE1 series with description \'" << paramFile["UTE1SeriesName"] << "\' and TE = " << paramFile["UTE1TE"];
@@ -192,7 +193,7 @@ int main(int argc, char **argv)
 
   try {
     //Find UTE 2
-    ute2UID = tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE2SeriesName"], paramFile["UTE2TE"].get<std::string>());
+    ute2UID = tree->FindUTEUID(studyUID, paramFile["UTE2SeriesName"], paramFile["UTE2TE"].get<std::string>());
   }
   catch (bool){
     LOG(ERROR) << "Could not find UTE2 series with description \'" << paramFile["UTE2SeriesName"] << "\' and TE = " << paramFile["UTE2TE"];
@@ -200,9 +201,57 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }  
 
-  tree->GetSeriesFileList(mumapUID);
-  tree->GetSeriesFileList(ute1UID);
-  tree->GetSeriesFileList(ute2UID);
+  fs::path destRoot = paramFile["destDir"].get<std::string>();
+  destRoot /= studyUID;
+
+  //Create out destination directory if it doesn't already exist.
+  if (!fs::exists(destRoot)){
+    try {
+      fs::create_directories(destRoot);
+    } catch (const fs::filesystem_error &e){
+      LOG(ERROR) << " cannot create destination folder : " << destRoot;
+      return EXIT_FAILURE;
+    }
+  }
+
+  std::string outputType = paramFile["destFileType"];
+
+  std::vector<std::string> srcSeriesUIDs = {mumapUID, ute1UID, ute2UID};
+
+  typedef itk::Image<float,3> ImageType;
+  typedef dcm::ReadDicomSeries<ImageType> SeriesReadType;
+
+
+  for (auto const& imgUID: srcSeriesUIDs) {
+    std::vector<fs::path> fNames = tree->GetSeriesFileList(imgUID);
+    std::unique_ptr<SeriesReadType> dcm(new SeriesReadType(fNames));
+
+    try {
+      dcm->Read();
+    } catch(bool){
+      LOG(ERROR) << "Could not read series: " << imgUID;
+      LOG(ERROR) << "Aborting!";
+      return EXIT_FAILURE;      
+    }
+
+    fs::path outFilePath = fs::canonical(destRoot);
+    outFilePath /= imgUID;
+    outFilePath += outputType;
+
+    try {
+      dcm->Write(outFilePath);
+    } catch(bool){
+      LOG(ERROR) << "Could not write series: " << imgUID << " to " << outFilePath;
+      LOG(ERROR) << "Aborting!";
+      return EXIT_FAILURE;      
+    }
+
+  }
+
+  //tree->GetSeriesFileList(mumapUID);
+  //tree->GetSeriesFileList(ute1UID);
+  //tree->GetSeriesFileList(ute2UID);
+
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;

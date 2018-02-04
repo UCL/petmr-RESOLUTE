@@ -32,6 +32,13 @@
 //GDCM includes
 #include "gdcmReader.h"
 
+#include <itkImage.h>
+#include <itkImageSeriesReader.h>
+#include <itkImageFileWriter.h>
+#include <itkImageDuplicator.h>
+#include <itkGDCMImageIO.h>
+
+
 namespace dcm {
 
 
@@ -455,6 +462,101 @@ std::string UTETree::FindUTEUID(const std::string studyUID, const std::string ta
   throw false;
 
   return "";
+}
+
+template <class TImage>
+class ReadDicomSeries
+{
+
+public:
+  typedef TImage ImageType;
+  typedef itk::ImageSeriesReader<ImageType> ReaderType;
+  typedef itk::ImageFileWriter<ImageType> WriterType;
+  typedef itk::GDCMImageIO ImageIOType;
+
+  //DicomReader();
+  ReadDicomSeries(std::vector<boost::filesystem::path> fileNames);
+
+  void Write(boost::filesystem::path outPath);
+  void Read();
+
+protected:
+  typename ImageType::Pointer _pImage;
+  typename ImageIOType::Pointer _pDicomInfo;
+  std::vector<boost::filesystem::path> _fileNames;
+
+
+};
+
+//Constructor
+template <typename TImage>
+ReadDicomSeries<TImage>::ReadDicomSeries(std::vector<boost::filesystem::path> fileNames)
+{
+
+  //Initialise ITK image and DICOM data structure.
+  _pImage = ImageType::New();
+  _pDicomInfo = ImageIOType::New();
+
+  _fileNames = fileNames;
+
+}
+
+template <typename TImage>
+void ReadDicomSeries<TImage>::Read()
+{
+
+  typename ReaderType::Pointer dicomReader = ReaderType::New();
+
+  std::vector<std::string> srcFiles;
+  for (auto f : _fileNames){
+    srcFiles.push_back(f.string());
+  }
+
+  dicomReader->SetImageIO(_pDicomInfo);
+  dicomReader->SetFileNames(srcFiles);
+
+  try
+  {
+    //Execute pipeline
+    dicomReader->Update();
+
+    //Duplicate contents or reader into _pImage.
+    typedef itk::ImageDuplicator<ImageType> DuplicatorType;
+    typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(dicomReader->GetOutput());
+    duplicator->Update();
+    _pImage = duplicator->GetOutput();
+
+  }
+  catch (itk::ExceptionObject &ex)
+  {
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << ex;
+    LOG(ERROR) << "Unable to get image from DICOM series";
+    throw false;
+  }
+
+}
+
+template <typename TImage>
+void ReadDicomSeries<TImage>::Write(boost::filesystem::path outPath)
+{
+  typename WriterType::Pointer writer = WriterType::New();
+
+  try {
+    writer->SetInput(_pImage);
+    writer->SetFileName( outPath.string() );
+    writer->Update();
+    DLOG(INFO) << "Wrote " << outPath << " successfully.";
+  }
+  catch (itk::ExceptionObject &ex)
+  {
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << ex;
+    LOG(ERROR) << "Unable to write image to " << outPath;
+    throw false;
+  }
+
 }
 
 
