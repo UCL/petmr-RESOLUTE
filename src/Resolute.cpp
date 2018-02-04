@@ -166,15 +166,43 @@ int main(int argc, char **argv)
   //Get all Series UIDs associated with study
   //std::vector<std::string> foundSeriesUIDs = tree->GetSeriesUIDList(tree->GetStudyUID(1));
 
-  //Find the mu-map
-  tree->FindMuMapUID(tree->GetStudyUID(1), paramFile["MRACSeriesName"]);
+  std::string mumapUID;
+  std::string ute1UID;
+  std::string ute2UID;
 
-  //Find UTE 1
-  tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE1SeriesName"], paramFile["UTE1TE"].get<std::string>());
+  try {
+    //Find the mu-map
+    mumapUID = tree->FindMuMapUID(tree->GetStudyUID(1), paramFile["MRACSeriesName"]);
+  }
+  catch (bool){
+    LOG(ERROR) << "Could not find mu-map series with description \'" << paramFile["MRACSeriesName"] << "\'";
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;
+  }
 
-  //Find UTE 2
-  tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE2SeriesName"], paramFile["UTE2TE"].get<std::string>());
+  try {
+    //Find UTE 1
+    ute1UID = tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE1SeriesName"], paramFile["UTE1TE"].get<std::string>());
+  }
+  catch (bool){
+    LOG(ERROR) << "Could not find UTE1 series with description \'" << paramFile["UTE1SeriesName"] << "\' and TE = " << paramFile["UTE1TE"];
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;
+  }  
 
+  try {
+    //Find UTE 2
+    ute2UID = tree->FindUTEUID(tree->GetStudyUID(1), paramFile["UTE2SeriesName"], paramFile["UTE2TE"].get<std::string>());
+  }
+  catch (bool){
+    LOG(ERROR) << "Could not find UTE2 series with description \'" << paramFile["UTE2SeriesName"] << "\' and TE = " << paramFile["UTE2TE"];
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;
+  }  
+
+  tree->GetSeriesFileList(mumapUID);
+  tree->GetSeriesFileList(ute1UID);
+  tree->GetSeriesFileList(ute2UID);
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;

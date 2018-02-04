@@ -169,9 +169,6 @@ bool ValidateJSON(const nlohmann::json j){
     throw false;
   }
 
-
-
-
   return true;
 }
 

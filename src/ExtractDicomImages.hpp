@@ -123,6 +123,8 @@ public:
   unsigned int GetNoOfImages(const std::string seriesUID);
   std::vector<nlohmann::json> GetInstanceList(const std::string seriesUID);
 
+  std::vector<boost::filesystem::path> GetSeriesFileList(const std::string seriesUID);
+
 
 protected:
 
@@ -341,6 +343,22 @@ std::vector<nlohmann::json> StudyTree::GetInstanceList(const std::string seriesU
 
   return outList;
 }
+
+std::vector<boost::filesystem::path> StudyTree::GetSeriesFileList(const std::string seriesUID){
+  
+  std::vector<boost::filesystem::path> outList;
+
+  for (auto const& i: _instanceList){
+    if (i["SeriesUID"] == seriesUID){
+      std::string path = i["FilePath"];
+      //DLOG(INFO) << "\t : " << path; 
+      outList.push_back(path);    
+    }
+  }
+
+  return outList; 
+}
+
 
 class UTETree : public StudyTree {
  
