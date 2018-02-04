@@ -221,6 +221,7 @@ int main(int argc, char **argv)
   typedef itk::Image<float,3> ImageType;
   typedef dcm::ReadDicomSeries<ImageType> SeriesReadType;
 
+  //Read mu-map and both UTEs and write file.
 
   for (auto const& imgUID: srcSeriesUIDs) {
     std::vector<fs::path> fNames = tree->GetSeriesFileList(imgUID);
@@ -248,9 +249,24 @@ int main(int argc, char **argv)
 
   }
 
-  //tree->GetSeriesFileList(mumapUID);
-  //tree->GetSeriesFileList(ute1UID);
-  //tree->GetSeriesFileList(ute2UID);
+  //Histogram normalisation 2.4
+
+  //Air mask 2.4.1
+
+  //Patient volume 2.4.2
+  //  - Region growing
+
+  //Bone R2* 2.4.3
+
+  //Registration 2.4.4
+
+  //Apply masking 2.4.5
+
+  //Scaling
+
+  //Output images
+
+  //Modify DICOM data
 
 
   //Print total execution time
