@@ -31,6 +31,7 @@
 #include "EnvironmentInfo.h"
 #include "ParamSkeleton.hpp"
 #include "ExtractDicomImages.hpp"
+#include "ExtractMaskImages.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
