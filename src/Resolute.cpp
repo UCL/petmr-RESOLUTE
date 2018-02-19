@@ -32,6 +32,7 @@
 #include "ParamSkeleton.hpp"
 #include "ExtractDicomImages.hpp"
 #include "ExtractMaskImages.hpp"
+#include "Resolute.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -224,6 +225,7 @@ int main(int argc, char **argv)
 
   //Read mu-map and both UTEs and write file.
 
+  /*
   for (auto const& imgUID: srcSeriesUIDs) {
     std::vector<fs::path> fNames = tree->GetSeriesFileList(imgUID);
     std::unique_ptr<SeriesReadType> dcm(new SeriesReadType(fNames));
@@ -248,8 +250,60 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;      
     }
 
+  }*/
+
+  typedef ns::ResoluteImageFilter<ImageType,ImageType> ResoluteFilterType;
+  ResoluteFilterType::Pointer resoluteFilter = ResoluteFilterType::New();
+
+  std::vector<fs::path> fNames = tree->GetSeriesFileList(mumapUID);
+  std::unique_ptr<SeriesReadType> dcm(new SeriesReadType(fNames));
+
+  try {
+    dcm->Read();
+  } catch(bool){
+      LOG(ERROR) << "Could not read mu-map series: " << mumapUID;
+      LOG(ERROR) << "Aborting!";
+      return EXIT_FAILURE;      
   }
 
+  resoluteFilter->SetMRACImage(dcm->GetOutput());
+
+  fNames = tree->GetSeriesFileList(ute1UID);
+  dcm.reset(new SeriesReadType(fNames));
+
+  try {
+    dcm->Read();
+  } catch(bool){
+      LOG(ERROR) << "Could not read UTE1 series: " << mumapUID;
+      LOG(ERROR) << "Aborting!";
+      return EXIT_FAILURE;      
+  }
+
+  resoluteFilter->SetUTEImage1(dcm->GetOutput());
+
+  fNames = tree->GetSeriesFileList(ute2UID);
+  dcm.reset(new SeriesReadType(fNames));
+
+  try {
+    dcm->Read();
+  } catch(bool){
+      LOG(ERROR) << "Could not read UTE2 series: " << mumapUID;
+      LOG(ERROR) << "Aborting!";
+      return EXIT_FAILURE;      
+  }
+
+  resoluteFilter->SetUTEImage2(dcm->GetOutput());
+  resoluteFilter->SetMaskImage(dcm->GetOutput());
+
+
+  try {
+    resoluteFilter->Update();
+  } catch (itk::ExceptionObject &e) {
+    LOG(ERROR) << e;
+    LOG(ERROR) << "Failed to apply RESOLUTE filter!";
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;    
+  }
   //Histogram normalisation 2.4
 
   //Air mask 2.4.1

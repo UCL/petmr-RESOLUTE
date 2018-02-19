@@ -480,6 +480,8 @@ public:
   void Write(boost::filesystem::path outPath);
   void Read();
 
+  typename TImage::ConstPointer GetOutput();
+
 protected:
   typename ImageType::Pointer _pImage;
   typename ImageIOType::Pointer _pDicomInfo;
@@ -536,6 +538,11 @@ void ReadDicomSeries<TImage>::Read()
     throw false;
   }
 
+}
+
+template <typename TImage>
+typename TImage::ConstPointer ReadDicomSeries<TImage>::GetOutput(){
+  return static_cast< const TImage * >( _pImage );
 }
 
 template <typename TImage>
