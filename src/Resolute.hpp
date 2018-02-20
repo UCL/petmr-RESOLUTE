@@ -46,8 +46,14 @@
 #include <itkAddImageFilter.h>
 #include <itkScalarImageKmeansImageFilter.h>
 #include <itkConnectedComponentImageFilter.h>
+#include <itkConnectedThresholdImageFilter.h>
 #include <itkRelabelComponentImageFilter.h>
+#include <itkBinaryFillholeImageFilter.h>
 
+#include "itkBinaryMorphologicalClosingImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
+
+//#include <itkVotingBinaryHoleFillFloodingImageFilter.h>
 /*
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
@@ -88,6 +94,8 @@ public:
   typedef typename TMaskImage::PixelType  MaskPixelType;
 
   typedef typename itk::Image<float, 2 > HistoImageType;
+  typedef itk::Image< unsigned char, 3 > InternalMaskImageType;
+
 
   void SetMRACImage(const TInputImage* mrac);
   void SetUTEImage1(const TInputImage* ute1);
@@ -104,13 +112,17 @@ protected:
   typename TMaskImage::ConstPointer GetMaskImage();
 
   void MakeAirMask();
+  void MakePatientVolumeMask();
 
   typename HistoImageType::Pointer _histogram;
 
   typename TInputImage::Pointer _normUTE1;
   typename TInputImage::Pointer _normUTE2;
   typename TInputImage::Pointer _sumUTE;
-  typename TInputImage::Pointer _airMask;
+
+  typename InternalMaskImageType::Pointer _airMask;
+  typename InternalMaskImageType::Pointer _patVolMask;
+
 
   struct cluster_coord {
     unsigned int x,y;
@@ -308,7 +320,7 @@ template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::MakeAirMask(){
 
   //Takes summed UTE images and creates binary mask of all voxels < 600 (air).
-  typedef itk::BinaryThresholdImageFilter <TInputImage, TInputImage> BinThresholdImageFilterType;
+  typedef itk::BinaryThresholdImageFilter <TInputImage, InternalMaskImageType> BinThresholdImageFilterType;
   typename BinThresholdImageFilterType::Pointer binFilter = BinThresholdImageFilterType::New();
 
   binFilter->SetInput( _sumUTE );
@@ -317,13 +329,13 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeAirMask(){
   binFilter->SetInsideValue( 1 );
   binFilter->Update();
 
-  typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
+  typedef itk::ImageDuplicator<InternalMaskImageType> DuplicatorType;
   typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
   duplicator->SetInputImage(binFilter->GetOutput());
   duplicator->Update();
   _airMask = duplicator->GetOutput();
 
-  typedef itk::ImageFileWriter<TInputImage> WriterType;
+  typedef itk::ImageFileWriter<InternalMaskImageType> WriterType;
   typename WriterType::Pointer writer = WriterType::New();
 
   writer->SetFileName("air.nii.gz");
@@ -335,6 +347,94 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeAirMask(){
     LOG(ERROR) << "Could not write air mask!";
     throw(ex);    
   }
+
+}
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::MakePatientVolumeMask(){
+
+  //Creates the head mask from MRAC and UTE.
+
+  //MRAC after region growing = 1
+  //snUTE > 1000 = 1
+  //Add both masks and binarize.
+  const int RADIUS = 11;
+
+  typename TInputImage::ConstPointer mrac = this->GetMRACImage();
+
+  typedef itk::BinaryThresholdImageFilter <TInputImage, InternalMaskImageType> BinThresholdImageFilterType;
+  typename BinThresholdImageFilterType::Pointer binFilter = BinThresholdImageFilterType::New();
+  typename BinThresholdImageFilterType::Pointer binFilter2 = BinThresholdImageFilterType::New();
+
+  binFilter->SetInput( mrac );
+  binFilter->SetLowerThreshold( 1 );
+  binFilter->SetInsideValue( 1 );
+
+  typedef itk::BinaryBallStructuringElement<InternalMaskImageType::PixelType, InternalMaskImageType::ImageDimension>
+              StructuringElementType;
+  StructuringElementType structuringElement;
+  structuringElement.SetRadius(RADIUS);
+  structuringElement.CreateStructuringElement();
+  typedef itk::BinaryMorphologicalClosingImageFilter <InternalMaskImageType, InternalMaskImageType, StructuringElementType>
+          BinaryMorphologicalClosingImageFilterType;
+  BinaryMorphologicalClosingImageFilterType::Pointer closingFilter
+          = BinaryMorphologicalClosingImageFilterType::New();
+  closingFilter->SetInput(binFilter->GetOutput());
+  closingFilter->SetForegroundValue(1);
+  closingFilter->SetKernel(structuringElement);
+  closingFilter->Update();
+
+  /*
+  typedef itk::BinaryFillholeImageFilter< CompImageType > FillHoleFilterType;
+  typename FillHoleFilterType::Pointer fillFilter = FillHoleFilterType::New();
+  fillFilter->SetInput(binFilter->GetOutput());
+  fillFilter->SetForegroundValue( 0 );
+  fillFilter->UpdateLargestPossibleRegion();
+  fillFilter->Update();
+  */
+
+  //Takes summed UTE images and creates binary mask of all voxels > 1000 (soft-tissue).
+  binFilter2->SetInput( _sumUTE );
+  binFilter2->SetLowerThreshold( 1000 );
+  binFilter2->SetInsideValue( 1 );
+
+  typedef itk::AddImageFilter<InternalMaskImageType,InternalMaskImageType> AddFilterType;
+  typename AddFilterType::Pointer addFilter = AddFilterType::New();
+
+  addFilter->SetInput1(closingFilter->GetOutput());
+  addFilter->SetInput2(binFilter2->GetOutput());
+  addFilter->Update();
+
+  typedef itk::ConnectedComponentImageFilter <InternalMaskImageType, InternalMaskImageType >
+    ConnectedComponentImageFilterType;
+ 
+  ConnectedComponentImageFilterType::Pointer connected =
+    ConnectedComponentImageFilterType::New ();
+  connected->SetInput(addFilter->GetOutput());
+  connected->Update();
+ 
+  LOG(INFO) << "Number of objects: " << connected->GetObjectCount() << std::endl;
+
+  typedef itk::ImageFileWriter<InternalMaskImageType> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  writer->SetFileName("patient_vol.nii.gz");
+  writer->SetInput(connected->GetOutput());
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write patient volume mask!";
+    throw(ex);    
+  }
+  
+  typedef itk::ImageDuplicator<InternalMaskImageType> DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(addFilter->GetOutput());
+  duplicator->Update();
+  _patVolMask = duplicator->GetOutput();
+  
+
 
 }
 
@@ -643,6 +743,10 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   LOG(INFO) << "Calculating air mask";
   MakeAirMask();
   LOG(INFO) << "Air mask calculation complete.";
+
+  LOG(INFO) << "Calculating patient volume";
+  MakePatientVolumeMask();
+  LOG(INFO) << "Patient volume calculation complete.";
 
 }
 
