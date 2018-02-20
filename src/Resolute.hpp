@@ -43,7 +43,9 @@
 #include <itkBinaryThresholdImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkMultiplyImageFilter.h>
-#include "itkScalarImageKmeansImageFilter.h"
+#include <itkScalarImageKmeansImageFilter.h>
+#include <itkConnectedComponentImageFilter.h>
+#include <itkRelabelComponentImageFilter.h>
 
 /*
 #include <itkImageFileReader.h>
@@ -108,9 +110,11 @@ protected:
 
   typedef typename std::vector<cluster_coord> CoordListVector;
 
-  typename ResoluteImageFilter::CoordListVector _coords;
+  //typename ResoluteImageFilter::CoordListVector _coords;
+  cluster_coord _coords;
 
   void CalculateHistogram();
+  void GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage);
   void FindClusterCoords();
 
   virtual void GenerateData() override;
@@ -289,41 +293,19 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
     throw(ex);    
   }
 
-  /*
-  typedef itk::ImageDuplicator<OutputHistogramImageType> DuplicatorType;
-  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
-  duplicator->SetInputImage( histogramToImageFilter->GetOutput() );
-
-  try {
-    duplicator->Update();
-    dstImage = duplicator->GetOutput();
-  }
-  catch (itk::ExceptionObject &ex){
-    BOOST_LOG_TRIVIAL(error) << "Could not duplicate histogram image!";
-    return false;  
-  }*/
-
 }
-
 template< typename TInputImage, typename TMaskImage>
-void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
-  
-  typedef itk::ThresholdImageFilter< HistoImageType > ThresholdType;
-  ThresholdType::Pointer thresh = ThresholdType::New();
-
-  thresh->SetInput( _histogram );
-  thresh->ThresholdAbove(5000);
-  thresh->SetOutsideValue(0);
-  thresh->Update();
+void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage ){
 
   LOG(INFO) << "Starting k-means";
 
-  const unsigned int NUMOFCLASSES=3;
-  _coords.clear();
+  const unsigned int NUMOFCLASSES=2;
+  _coords.x = 0;
+  _coords.y = 0;
 
   typedef itk::Statistics::JointDomainImageToListSampleAdaptor< HistoImageType >   AdaptorType;
   typename AdaptorType::Pointer adaptor = AdaptorType::New();
-  adaptor->SetImage( thresh->GetOutput() );
+  adaptor->SetImage( h );
 
   typedef typename AdaptorType::MeasurementVectorType  MeasurementVectorType;
 
@@ -342,21 +324,21 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   typedef itk::Statistics::KdTreeBasedKmeansEstimator<TreeType> EstimatorType;
 
   typename EstimatorType::Pointer estimator = EstimatorType::New();
-  typename EstimatorType::ParametersType initialMeans( 9 );
+  typename EstimatorType::ParametersType initialMeans( NUMOFCLASSES*3 );
   
-  initialMeans[0] = 0;
-  initialMeans[1] = 0;
+  initialMeans[0] = 100;
+  initialMeans[1] = 100;
   initialMeans[2] = 1000;
-  initialMeans[3] = 0;
-  initialMeans[4] = 0;
-  initialMeans[5] = 1000;
-  initialMeans[6] = 0;
-  initialMeans[7] = 0;
-  initialMeans[8] = 0;   
+  initialMeans[3] = 100;
+  initialMeans[4] = 100;
+  initialMeans[5] = 0;
+  /*initialMeans[6] = 100;
+  initialMeans[7] = 100;
+  initialMeans[8] = 0; */
 
   estimator->SetParameters( initialMeans );
   estimator->SetKdTree( treeGenerator->GetOutput() );
-  estimator->SetMaximumIteration( 50000 );
+  estimator->SetMaximumIteration( 500 );
   estimator->SetCentroidPositionChangesThreshold(0);
   estimator->StartOptimization();
 
@@ -367,13 +349,8 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   //typename EstimatorType::ParametersType estimatedCentroids;
 
   LOG(INFO) << "Centre of soft-tissue cluster = (" << (int)estimatedMeans[0]-1 << "," << (int)estimatedMeans[1]-1 << ")";
-  float scaleFact1 = 1000.0/estimatedMeans[0];
-  float scaleFact2 = 1000.0/estimatedMeans[1];
-
-  if ( (scaleFact1 > 1.0) && (scaleFact2 > 1.0) ){
-    LOG(INFO) <<  "\tUTE1 * " <<  scaleFact1;
-    LOG(INFO) <<  "\tUTE2 * " <<  scaleFact2;
-  }
+  _coords.x = (int)estimatedMeans[0]-1;
+  _coords.y = (int)estimatedMeans[1]-1;
 
   //Test histo start
   typedef itk::Statistics::DistanceToCentroidMembershipFunction< MeasurementVectorType > MembershipFunctionType;
@@ -386,7 +363,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
  
   classifier->SetDecisionRule(decisionRule);
   classifier->SetInput( adaptor );
-  classifier->SetNumberOfClasses( 3 );
+  classifier->SetNumberOfClasses( NUMOFCLASSES );
  
   typedef ClassifierType::ClassLabelVectorObjectType               ClassLabelVectorObjectType;
   typedef ClassifierType::ClassLabelVectorType                     ClassLabelVectorType;
@@ -397,9 +374,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   classifier->SetClassLabels( classLabelsObject );
  
   ClassLabelVectorType &  classLabelsVector = classLabelsObject->Get();
-  classLabelsVector.push_back( 100 );
-  classLabelsVector.push_back( 200 );
-  classLabelsVector.push_back( 300 );
+  classLabelsVector.push_back( 1 );
+  classLabelsVector.push_back( 0 );
+  //classLabelsVector.push_back( 300 );
 
   MembershipFunctionVectorObjectType::Pointer membershipFunctionsObject =
     MembershipFunctionVectorObjectType::New();
@@ -409,7 +386,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
  
   MembershipFunctionType::CentroidType origin( adaptor->GetMeasurementVectorSize() );
   int index = 0;
-  for ( unsigned int i = 0 ; i < 3 ; i++ )
+  for ( unsigned int i = 0 ; i < NUMOFCLASSES ; i++ )
     {
     MembershipFunctionPointer membershipFunction = MembershipFunctionType::New();
     for ( unsigned int j = 0 ; j < adaptor->GetMeasurementVectorSize(); j++ )
@@ -423,9 +400,14 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   classifier->Update();
 
   // Prepare the output image
-  HistoImageType::Pointer outputImage = HistoImageType::New();
-  outputImage->SetRegions(_histogram->GetLargestPossibleRegion());
-  outputImage->Allocate();
+  //HistoImageType::Pointer outputImage = HistoImageType::New();
+  //outputImage->SetRegions(h->GetLargestPossibleRegion());
+  //outputImage->Allocate();
+  typedef itk::ImageDuplicator<HistoImageType> DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(h);
+  duplicator->Update();
+  outputImage = duplicator->GetOutput();
   outputImage->FillBuffer(0);
  
   const ClassifierType::MembershipSampleType* membershipSample = classifier->GetOutput();
@@ -453,6 +435,66 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   outputWriter->Update();
   //Test histo end
 
+}
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
+  
+  typedef itk::ThresholdImageFilter< HistoImageType > ThresholdType;
+  ThresholdType::Pointer thresh = ThresholdType::New();
+
+  thresh->SetInput( _histogram );
+  thresh->ThresholdAbove(2000);
+  thresh->SetOutsideValue(2000);
+  thresh->Update();
+
+  HistoImageType::Pointer histoMaskImage = HistoImageType::New();
+
+  GetKMeansMask(thresh->GetOutput(), histoMaskImage);
+
+  typedef itk::Image< unsigned short, 2 > CompImageType;
+  typedef itk::ConnectedComponentImageFilter <HistoImageType, CompImageType >
+    ConnectedComponentImageFilterType;
+ 
+  ConnectedComponentImageFilterType::Pointer connected =
+    ConnectedComponentImageFilterType::New ();
+  connected->SetInput(histoMaskImage);
+  connected->Update();
+ 
+  LOG(INFO) << "Number of objects: " << connected->GetObjectCount() << std::endl;
+
+  typedef itk::RelabelComponentImageFilter<CompImageType, CompImageType> RelabelFilterType;
+  RelabelFilterType::Pointer relabelFilter =
+    RelabelFilterType::New();
+  relabelFilter->SetInput(connected->GetOutput());
+
+  relabelFilter->Update();
+
+  typedef itk::BinaryThresholdImageFilter <CompImageType, CompImageType> BinThresholdImageFilterType;
+  typename BinThresholdImageFilterType::Pointer binFilter = BinThresholdImageFilterType::New();
+
+  binFilter->SetInput( relabelFilter->GetOutput() );
+  binFilter->SetLowerThreshold( 1 );
+  binFilter->SetUpperThreshold( 1 );
+  binFilter->SetInsideValue( 1 );
+  binFilter->Update();
+
+  typedef itk::MaskImageFilter< HistoImageType, CompImageType, HistoImageType > MaskFilterType;
+  typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+  maskFilter->SetInput(_histogram);
+  maskFilter->SetOutsideValue( 0 ); 
+  maskFilter->SetMaskImage( binFilter->GetOutput() );
+  maskFilter->Update();
+
+  GetKMeansMask(maskFilter->GetOutput(), histoMaskImage);
+
+  float scaleFact1 = 1000.0/_coords.x;
+  float scaleFact2 = 1000.0/_coords.y;
+
+  if ( (scaleFact1 > 1.0) && (scaleFact2 > 1.0) ){
+    LOG(INFO) <<  "\tUTE1 * " <<  scaleFact1;
+    LOG(INFO) <<  "\tUTE2 * " <<  scaleFact2;
+  }
 
   typename TInputImage::ConstPointer ute1 = this->GetUTEImage1();
 
@@ -488,7 +530,6 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
     LOG(ERROR) << "Could not write histogram!";
     throw(ex);    
   }
-
 
 }
 
