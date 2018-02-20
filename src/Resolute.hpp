@@ -43,6 +43,7 @@
 #include <itkBinaryThresholdImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkMultiplyImageFilter.h>
+#include <itkAddImageFilter.h>
 #include <itkScalarImageKmeansImageFilter.h>
 #include <itkConnectedComponentImageFilter.h>
 #include <itkRelabelComponentImageFilter.h>
@@ -102,7 +103,14 @@ protected:
   typename TInputImage::ConstPointer GetUTEImage2();
   typename TMaskImage::ConstPointer GetMaskImage();
 
+  void MakeAirMask();
+
   typename HistoImageType::Pointer _histogram;
+
+  typename TInputImage::Pointer _normUTE1;
+  typename TInputImage::Pointer _normUTE2;
+  typename TInputImage::Pointer _sumUTE;
+  typename TInputImage::Pointer _airMask;
 
   struct cluster_coord {
     unsigned int x,y;
@@ -116,6 +124,7 @@ protected:
   void CalculateHistogram();
   void GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage);
   void FindClusterCoords();
+  void NormaliseUTE();
 
   virtual void GenerateData() override;
 
@@ -294,6 +303,41 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
   }
 
 }
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::MakeAirMask(){
+
+  //Takes summed UTE images and creates binary mask of all voxels < 600 (air).
+  typedef itk::BinaryThresholdImageFilter <TInputImage, TInputImage> BinThresholdImageFilterType;
+  typename BinThresholdImageFilterType::Pointer binFilter = BinThresholdImageFilterType::New();
+
+  binFilter->SetInput( _sumUTE );
+  binFilter->SetLowerThreshold( 0 );
+  binFilter->SetUpperThreshold( 600 );
+  binFilter->SetInsideValue( 1 );
+  binFilter->Update();
+
+  typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(binFilter->GetOutput());
+  duplicator->Update();
+  _airMask = duplicator->GetOutput();
+
+  typedef itk::ImageFileWriter<TInputImage> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  writer->SetFileName("air.nii.gz");
+  writer->SetInput(_airMask);
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write air mask!";
+    throw(ex);    
+  }
+
+}
+
 template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage ){
 
@@ -488,6 +532,11 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
 
   GetKMeansMask(maskFilter->GetOutput(), histoMaskImage);
 
+}
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::NormaliseUTE(){
+
   float scaleFact1 = 1000.0/_coords.x;
   float scaleFact2 = 1000.0/_coords.y;
 
@@ -512,9 +561,16 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   try {
     writer->Update();
   } catch (itk::ExceptionObject &ex){
-    LOG(ERROR) << "Could not write histogram!";
+    LOG(ERROR) << "Could not write UTE1!";
     throw(ex);    
   }
+
+  typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(mult->GetOutput());
+  duplicator->Update();
+
+  _normUTE1 = duplicator->GetOutput();
 
   typename TInputImage::ConstPointer ute2 = this->GetUTEImage2();
 
@@ -527,9 +583,36 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   try {
     writer->Update();
   } catch (itk::ExceptionObject &ex){
-    LOG(ERROR) << "Could not write histogram!";
+    LOG(ERROR) << "Could not write UTE2!";
     throw(ex);    
   }
+
+  duplicator->SetInputImage(mult->GetOutput());
+  duplicator->Update();
+
+  _normUTE2 = duplicator->GetOutput();
+
+  typedef itk::AddImageFilter<TInputImage,TInputImage> AddFilterType;
+  typename AddFilterType::Pointer addFilter = AddFilterType::New();
+
+  addFilter->SetInput1(_normUTE1);
+  addFilter->SetInput2(_normUTE2);
+  addFilter->Update();
+
+  duplicator->SetInputImage(addFilter->GetOutput());
+  duplicator->Update();
+
+  _sumUTE = duplicator->GetOutput();
+
+  writer->SetFileName("snUTE-test.nii.gz");
+  writer->SetInput(_sumUTE);
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write snUTE!";
+    throw(ex);    
+  }  
 
 }
 
@@ -545,13 +628,21 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   output->SetRegions(mrac->GetLargestPossibleRegion());
   output->Allocate();
 
-  DLOG(INFO) << "Initialised input images.";
+  LOG(INFO) << "Initialised input images.";
   CalculateHistogram();
-  DLOG(INFO) << "Calculated histogram.";
+  LOG(INFO) << "Calculated histogram.";
 
-  DLOG(INFO) << "Finding centroid";
+  LOG(INFO) << "Finding centroid";
   FindClusterCoords();
-  DLOG(INFO) << "Centroid found at...";
+  LOG(INFO) << "Centroid found at...";
+
+  LOG(INFO) << "Normalising UTE";
+  NormaliseUTE();
+  LOG(INFO) << "Normalisation complete.";
+
+  LOG(INFO) << "Calculating air mask";
+  MakeAirMask();
+  LOG(INFO) << "Air mask calculation complete.";
 
 }
 
