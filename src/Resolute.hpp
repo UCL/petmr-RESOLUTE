@@ -34,6 +34,14 @@
 #include <itkHistogramToIntensityImageFilter.h>
 #include <itkMinimumMaximumImageFilter.h>
 
+#include <itkKdTree.h>
+#include <itkKdTreeBasedKmeansEstimator.h>
+#include <itkScalarImageKmeansImageFilter.h>
+#include <itkImageToListSampleAdaptor.h>
+#include <itkJointDomainImageToListSampleAdaptor.h>
+#include <itkThresholdImageFilter.h>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
 
 /*
 #include <itkImageFileReader.h>
@@ -92,7 +100,16 @@ protected:
 
   typename HistoImageType::Pointer _histogram;
 
+  struct cluster_coord {
+    unsigned int x,y;
+  };
+
+  typedef typename std::vector<cluster_coord> CoordListVector;
+
+  typename ResoluteImageFilter::CoordListVector _coords;
+
   void CalculateHistogram();
+  void FindClusterCoords();
 
   virtual void GenerateData() override;
 
@@ -287,6 +304,69 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
 }
 
 template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
+  
+  typedef itk::ThresholdImageFilter< HistoImageType > ThresholdType;
+  ThresholdType::Pointer thresh = ThresholdType::New();
+
+  thresh->SetInput( _histogram );
+  thresh->ThresholdAbove(5000);
+  thresh->SetOutsideValue(0);
+  thresh->Update();
+
+  LOG(INFO) << "Starting k-means";
+
+  const unsigned int NUMOFCLASSES=3;
+  _coords.clear();
+
+  typedef itk::Statistics::JointDomainImageToListSampleAdaptor< HistoImageType >   AdaptorType;
+  typename AdaptorType::Pointer adaptor = AdaptorType::New();
+  adaptor->SetImage( thresh->GetOutput() );
+
+  typedef typename AdaptorType::MeasurementVectorType  MeasurementVectorType;
+
+  // Create the K-d tree structure
+  typedef itk::Statistics::WeightedCentroidKdTreeGenerator<AdaptorType > TreeGeneratorType;
+
+  typename TreeGeneratorType::Pointer treeGenerator = TreeGeneratorType::New();
+
+  treeGenerator->SetSample( adaptor );
+  treeGenerator->SetBucketSize( 16 );
+  treeGenerator->Update();
+
+  DLOG(INFO) << "Generated K-d tree";
+
+  typedef typename TreeGeneratorType::KdTreeType TreeType;
+  typedef itk::Statistics::KdTreeBasedKmeansEstimator<TreeType> EstimatorType;
+
+  typename EstimatorType::Pointer estimator = EstimatorType::New();
+  typename EstimatorType::ParametersType initialMeans( 9 );
+  
+  initialMeans[0] = 0;
+  initialMeans[1] = 0;
+  initialMeans[2] = 1000;
+  initialMeans[3] = 0;
+  initialMeans[4] = 0;
+  initialMeans[5] = 1000;
+  initialMeans[6] = 0;
+  initialMeans[7] = 0;
+  initialMeans[8] = 0;   
+
+  estimator->SetParameters( initialMeans );
+  estimator->SetKdTree( treeGenerator->GetOutput() );
+  estimator->SetMaximumIteration( 50000 );
+  estimator->SetCentroidPositionChangesThreshold(0);
+  estimator->StartOptimization();
+
+  LOG(INFO) << "k-means estimation complete.";
+
+  typename EstimatorType::ParametersType estimatedMeans = estimator->GetParameters();
+  LOG(INFO) << "Estimated means: " << estimatedMeans;
+  typename EstimatorType::ParametersType estimatedCentroids;
+
+}
+
+template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
 {
   typename TInputImage::ConstPointer mrac = this->GetMRACImage();
@@ -301,6 +381,10 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   DLOG(INFO) << "Initialised input images.";
   CalculateHistogram();
   DLOG(INFO) << "Calculated histogram.";
+
+  DLOG(INFO) << "Finding centroid";
+  FindClusterCoords();
+  DLOG(INFO) << "Centroid found at...";
 
 }
 
