@@ -44,6 +44,8 @@
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkMultiplyImageFilter.h>
 #include <itkAddImageFilter.h>
+#include <itkSubtractImageFilter.h>
+#include <itkDivideImageFilter.h>
 #include <itkScalarImageKmeansImageFilter.h>
 #include <itkConnectedComponentImageFilter.h>
 #include <itkConnectedThresholdImageFilter.h>
@@ -52,6 +54,8 @@
 
 #include "itkBinaryMorphologicalClosingImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
+
+#include <itkLogImageFilter.h>
 
 //#include <itkVotingBinaryHoleFillFloodingImageFilter.h>
 /*
@@ -113,12 +117,15 @@ protected:
 
   void MakeAirMask();
   void MakePatientVolumeMask();
+  void MakeR2s();
 
   typename HistoImageType::Pointer _histogram;
 
   typename TInputImage::Pointer _normUTE1;
   typename TInputImage::Pointer _normUTE2;
   typename TInputImage::Pointer _sumUTE;
+  typename TInputImage::Pointer _R2s;
+
 
   typename InternalMaskImageType::Pointer _airMask;
   typename InternalMaskImageType::Pointer _patVolMask;
@@ -439,6 +446,64 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakePatientVolumeMask(){
 }
 
 template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
+
+  float dUTE = (2.46 - 0.07)/1000.0;
+
+  typename TInputImage::ConstPointer ute1 = this->GetUTEImage1();
+  typename TInputImage::ConstPointer ute2 = this->GetUTEImage2();
+
+  typedef itk::LogImageFilter<TInputImage,TInputImage> LogFilterType;
+  //typedef itk::ImageDuplicator<InternalMaskImageType> DuplicatorType;
+
+  typename LogFilterType::Pointer l1 = LogFilterType::New();
+  typename LogFilterType::Pointer l2 = LogFilterType::New();
+
+  l1->SetInput(ute1);
+  l2->SetInput(ute2);
+
+  typedef itk::SubtractImageFilter<TInputImage,TInputImage> SubtractFilterType;
+  typename SubtractFilterType::Pointer subFilter = SubtractFilterType::New();
+
+  subFilter->SetInput1(l1->GetOutput());
+  subFilter->SetInput2(l2->GetOutput());
+
+  typedef itk::DivideImageFilter<TInputImage,TInputImage, TInputImage> DivideFilterType;
+  typename DivideFilterType::Pointer divideFilter = DivideFilterType::New();
+
+  divideFilter->SetInput(subFilter->GetOutput());
+  divideFilter->SetConstant(dUTE);
+
+  typedef itk::MaskImageFilter< TInputImage, InternalMaskImageType, TInputImage > MaskFilterType;
+  typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+  maskFilter->SetInput(divideFilter->GetOutput());
+  maskFilter->SetOutsideValue( 0 ); 
+  maskFilter->SetMaskImage( _patVolMask );
+
+  typedef itk::ImageFileWriter<TInputImage> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  writer->SetFileName("R2s.nii.gz");
+  writer->SetInput(maskFilter->GetOutput());
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write R2* image!";
+    throw(ex);    
+  }
+  
+  typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(divideFilter->GetOutput());
+  duplicator->Update();
+  _R2s = duplicator->GetOutput();
+
+
+
+}
+
+template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage ){
 
   LOG(INFO) << "Starting k-means";
@@ -747,6 +812,10 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   LOG(INFO) << "Calculating patient volume";
   MakePatientVolumeMask();
   LOG(INFO) << "Patient volume calculation complete.";
+
+  LOG(INFO) << "Calculating R2*";
+  MakeR2s();
+  LOG(INFO) << "R2* calculation complete.";
 
 }
 
