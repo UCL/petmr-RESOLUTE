@@ -43,6 +43,7 @@
 #include <itkBinaryThresholdImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkMultiplyImageFilter.h>
+#include "itkScalarImageKmeansImageFilter.h"
 
 /*
 #include <itkImageFileReader.h>
@@ -327,12 +328,12 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   typedef typename AdaptorType::MeasurementVectorType  MeasurementVectorType;
 
   // Create the K-d tree structure
-  typedef itk::Statistics::WeightedCentroidKdTreeGenerator<AdaptorType > TreeGeneratorType;
+  typedef itk::Statistics::WeightedCentroidKdTreeGenerator< AdaptorType > TreeGeneratorType;
 
   typename TreeGeneratorType::Pointer treeGenerator = TreeGeneratorType::New();
 
   treeGenerator->SetSample( adaptor );
-  treeGenerator->SetBucketSize( 8 );
+  treeGenerator->SetBucketSize( 16 );
   treeGenerator->Update();
 
   DLOG(INFO) << "Generated K-d tree";
@@ -374,6 +375,85 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
     LOG(INFO) <<  "\tUTE2 * " <<  scaleFact2;
   }
 
+  //Test histo start
+  typedef itk::Statistics::DistanceToCentroidMembershipFunction< MeasurementVectorType > MembershipFunctionType;
+  typedef MembershipFunctionType::Pointer MembershipFunctionPointer;
+  typedef itk::Statistics::MinimumDecisionRule DecisionRuleType;
+  typename DecisionRuleType::Pointer decisionRule = DecisionRuleType::New();
+
+  typedef itk::Statistics::SampleClassifierFilter< AdaptorType > ClassifierType;
+  ClassifierType::Pointer classifier = ClassifierType::New();
+ 
+  classifier->SetDecisionRule(decisionRule);
+  classifier->SetInput( adaptor );
+  classifier->SetNumberOfClasses( 3 );
+ 
+  typedef ClassifierType::ClassLabelVectorObjectType               ClassLabelVectorObjectType;
+  typedef ClassifierType::ClassLabelVectorType                     ClassLabelVectorType;
+  typedef ClassifierType::MembershipFunctionVectorObjectType       MembershipFunctionVectorObjectType;
+  typedef ClassifierType::MembershipFunctionVectorType             MembershipFunctionVectorType;
+ 
+  ClassLabelVectorObjectType::Pointer  classLabelsObject = ClassLabelVectorObjectType::New();
+  classifier->SetClassLabels( classLabelsObject );
+ 
+  ClassLabelVectorType &  classLabelsVector = classLabelsObject->Get();
+  classLabelsVector.push_back( 100 );
+  classLabelsVector.push_back( 200 );
+  classLabelsVector.push_back( 300 );
+
+  MembershipFunctionVectorObjectType::Pointer membershipFunctionsObject =
+    MembershipFunctionVectorObjectType::New();
+  classifier->SetMembershipFunctions( membershipFunctionsObject );
+ 
+  MembershipFunctionVectorType &  membershipFunctionsVector = membershipFunctionsObject->Get();
+ 
+  MembershipFunctionType::CentroidType origin( adaptor->GetMeasurementVectorSize() );
+  int index = 0;
+  for ( unsigned int i = 0 ; i < 3 ; i++ )
+    {
+    MembershipFunctionPointer membershipFunction = MembershipFunctionType::New();
+    for ( unsigned int j = 0 ; j < adaptor->GetMeasurementVectorSize(); j++ )
+      {
+      origin[j] = estimatedMeans[index++];
+      }
+    membershipFunction->SetCentroid( origin );
+    membershipFunctionsVector.push_back( membershipFunction.GetPointer() );
+    }
+ 
+  classifier->Update();
+
+  // Prepare the output image
+  HistoImageType::Pointer outputImage = HistoImageType::New();
+  outputImage->SetRegions(_histogram->GetLargestPossibleRegion());
+  outputImage->Allocate();
+  outputImage->FillBuffer(0);
+ 
+  const ClassifierType::MembershipSampleType* membershipSample = classifier->GetOutput();
+  ClassifierType::MembershipSampleType::ConstIterator iter = membershipSample->Begin();
+
+  // Setup the output image iterator - this is automatically synchronized with the membership iterator since the sample is an adaptor
+  itk::ImageRegionIteratorWithIndex<HistoImageType> outputIterator(outputImage,outputImage->GetLargestPossibleRegion());
+  outputIterator.GoToBegin();
+
+  while ( iter != membershipSample->End() )
+  {
+    DLOG(INFO) << "measurement vector = " << iter.GetMeasurementVector()
+              << "class label = " << iter.GetClassLabel();
+
+    int classLabel = iter.GetClassLabel();
+    outputIterator.Set(classLabel);
+    ++iter;
+    ++outputIterator;
+  }
+
+  typedef itk::ImageFileWriter< HistoImageType  > HistoWriterType;
+  HistoWriterType::Pointer outputWriter = HistoWriterType::New();
+  outputWriter->SetFileName("kmeans.mhd");
+  outputWriter->SetInput(outputImage);
+  outputWriter->Update();
+  //Test histo end
+
+
   typename TInputImage::ConstPointer ute1 = this->GetUTEImage1();
 
   typedef typename itk::MultiplyImageFilter<TInputImage,TInputImage> MultiplyType;
@@ -408,6 +488,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
     LOG(ERROR) << "Could not write histogram!";
     throw(ex);    
   }
+
 
 }
 
