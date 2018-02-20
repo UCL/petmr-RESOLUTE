@@ -42,6 +42,7 @@
 #include <itkThresholdImageFilter.h>
 #include <itkBinaryThresholdImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
+#include <itkMultiplyImageFilter.h>
 
 /*
 #include <itkImageFileReader.h>
@@ -331,7 +332,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   typename TreeGeneratorType::Pointer treeGenerator = TreeGeneratorType::New();
 
   treeGenerator->SetSample( adaptor );
-  treeGenerator->SetBucketSize( 16 );
+  treeGenerator->SetBucketSize( 8 );
   treeGenerator->Update();
 
   DLOG(INFO) << "Generated K-d tree";
@@ -361,8 +362,52 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::FindClusterCoords(){
   LOG(INFO) << "k-means estimation complete.";
 
   typename EstimatorType::ParametersType estimatedMeans = estimator->GetParameters();
-  LOG(INFO) << "Estimated means: " << estimatedMeans;
-  typename EstimatorType::ParametersType estimatedCentroids;
+  //LOG(INFO) << "Estimated means: " << estimatedMeans;
+  //typename EstimatorType::ParametersType estimatedCentroids;
+
+  LOG(INFO) << "Centre of soft-tissue cluster = (" << (int)estimatedMeans[0]-1 << "," << (int)estimatedMeans[1]-1 << ")";
+  float scaleFact1 = 1000.0/estimatedMeans[0];
+  float scaleFact2 = 1000.0/estimatedMeans[1];
+
+  if ( (scaleFact1 > 1.0) && (scaleFact2 > 1.0) ){
+    LOG(INFO) <<  "\tUTE1 * " <<  scaleFact1;
+    LOG(INFO) <<  "\tUTE2 * " <<  scaleFact2;
+  }
+
+  typename TInputImage::ConstPointer ute1 = this->GetUTEImage1();
+
+  typedef typename itk::MultiplyImageFilter<TInputImage,TInputImage> MultiplyType;
+  typename MultiplyType::Pointer mult = MultiplyType::New();
+  mult->SetInput1(ute1);
+  mult->SetConstant(scaleFact1);
+
+  typedef itk::ImageFileWriter<TInputImage> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  writer->SetFileName("ute1-test.nii.gz");
+  writer->SetInput(mult->GetOutput());
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write histogram!";
+    throw(ex);    
+  }
+
+  typename TInputImage::ConstPointer ute2 = this->GetUTEImage2();
+
+  mult->SetInput1(ute2);
+  mult->SetConstant(scaleFact2);
+
+  writer->SetFileName("ute2-test.nii.gz");
+  writer->SetInput(mult->GetOutput());
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write histogram!";
+    throw(ex);    
+  }
 
 }
 
