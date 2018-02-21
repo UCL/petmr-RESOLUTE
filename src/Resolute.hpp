@@ -66,6 +66,11 @@
 
 namespace ns {
 
+inline float GetHUfromR2s(float r){
+  //From Ladefoged et al. Figure 1.
+  return 1.351e-6 * pow(r,3.0) - 3.617e-3 * pow(r,2.0) + 3.841 * r - 19.46;
+}
+
 template< typename TInputImage, typename TMaskImage>
 class ResoluteImageFilter : public itk::ImageToImageFilter< TInputImage, TInputImage >
 {
@@ -210,6 +215,7 @@ typename TMaskImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::
   return static_cast< const TMaskImage * >
          ( this->ProcessObject::GetInput(3) );
 }
+
 
 template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
