@@ -25,6 +25,7 @@
 
 #include <boost/filesystem.hpp>
 #include <glog/logging.h>
+#include <nlohmann/json.hpp>
 
 #include <itkImage.h>
 #include <itkImageToImageFilter.h>
@@ -56,6 +57,8 @@
 #include "itkBinaryBallStructuringElement.h"
 
 #include <itkLogImageFilter.h>
+
+#include "ANTsReg.hpp"
 
 //#include <itkVotingBinaryHoleFillFloodingImageFilter.h>
 /*
@@ -112,6 +115,7 @@ public:
   void SetMaskImage(const TMaskImage* mask);
 
   void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
+  void SetJSONParams(const nlohmann::json &j){ _jsonParams = j;};
 
 protected:
   ResoluteImageFilter();
@@ -125,6 +129,7 @@ protected:
   void MakeAirMask();
   void MakePatientVolumeMask();
   void MakeR2s();
+  void PerformRegistration();
 
   typename HistoImageType::Pointer _histogram;
 
@@ -138,6 +143,8 @@ protected:
   typename InternalMaskImageType::Pointer _patVolMask;
 
   boost::filesystem::path _dstDir;
+
+  nlohmann::json _jsonParams;
 
   struct cluster_coord {
     unsigned int x,y;
@@ -521,6 +528,31 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
 }
 
 template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::PerformRegistration(){
+
+  typedef reg::ANTsReg<TInputImage> ANTsRegistrationType;
+  std::unique_ptr<ANTsRegistrationType>ANTsRegistration(new ANTsRegistrationType);
+
+  try {
+    ANTsRegistration->SetParams(_jsonParams["regArgs"]);
+    ANTsRegistration->SetOutputDirectory( _dstDir );
+    ANTsRegistration->SetOutputPrefix("ANTs-");
+    ANTsRegistration->SetReferenceFileName(_jsonParams["regTemplatePath"].template get<std::string>());
+
+    boost::filesystem::path floatFileName = _dstDir;
+    floatFileName /= "ute2.nii.gz";
+    ANTsRegistration->SetFloatingFileName(floatFileName);    
+    ANTsRegistration->Update();
+  } catch (bool) {
+    LOG(ERROR) << "Error during registration!";
+    LOG(ERROR) << "Aborting!";
+    itk::ExceptionObject ex;
+    throw(ex);    
+  }
+
+}
+
+template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage ){
 
   LOG(INFO) << "Starting k-means";
@@ -843,6 +875,17 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   MakeR2s();
   LOG(INFO) << "R2* calculation complete.";
 
+  LOG(INFO) << "Registering UTE to Atlas";
+  PerformRegistration();
+  LOG(INFO) << "Registration complete.";
+
+
+  //Apply masking 2.4.5
+
+  //Scaling
+
+  //Output images
+  
 }
 
 }//namespace ns

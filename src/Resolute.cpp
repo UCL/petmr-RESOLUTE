@@ -33,7 +33,6 @@
 #include "ExtractDicomImages.hpp"
 #include "ExtractMaskImages.hpp"
 #include "Resolute.hpp"
-#include "ANTsReg.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -255,6 +254,7 @@ int main(int argc, char **argv)
 
   typedef ns::ResoluteImageFilter<ImageType,ImageType> ResoluteFilterType;
   ResoluteFilterType::Pointer resoluteFilter = ResoluteFilterType::New();
+  resoluteFilter->SetJSONParams(paramFile);
   resoluteFilter->SetOutputDirectory(destRoot);
 
   std::vector<fs::path> fNames = tree->GetSeriesFileList(mumapUID);
@@ -307,34 +307,7 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;    
   }
 
-  typedef reg::ANTsReg<ImageType> ANTsRegistrationType;
-  std::unique_ptr<ANTsRegistrationType>ANTsRegistration(new ANTsRegistrationType);
-
-  try {
-    ANTsRegistration->SetParams(paramFile["regArgs"]);
-    ANTsRegistration->SetOutputDirectory( destRoot );
-    ANTsRegistration->SetOutputPrefix("ANTs-");
-    ANTsRegistration->SetReferenceFileName(paramFile["regTemplatePath"].get<std::string>());
-
-    boost::filesystem::path floatFileName = destRoot;
-    floatFileName /= "ute2.nii.gz";
-    ANTsRegistration->SetFloatingFileName(floatFileName);    
-    ANTsRegistration->Update();
-  } catch (bool) {
-    LOG(ERROR) << "Error during registration!";
-    LOG(ERROR) << "Aborting!";
-    return EXIT_FAILURE;  
-  }
-
-  //Registration 2.4.4
-
-  //Apply masking 2.4.5
-
-  //Scaling
-
-  //Output images
-
-  //Modify DICOM data
+  //Modify DICOM data here
 
 
   //Print total execution time
