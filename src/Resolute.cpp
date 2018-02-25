@@ -255,6 +255,7 @@ int main(int argc, char **argv)
 
   typedef ns::ResoluteImageFilter<ImageType,ImageType> ResoluteFilterType;
   ResoluteFilterType::Pointer resoluteFilter = ResoluteFilterType::New();
+  resoluteFilter->SetOutputDirectory(destRoot);
 
   std::vector<fs::path> fNames = tree->GetSeriesFileList(mumapUID);
   std::unique_ptr<SeriesReadType> dcm(new SeriesReadType(fNames));
@@ -312,9 +313,12 @@ int main(int argc, char **argv)
   try {
     ANTsRegistration->SetParams(paramFile["regArgs"]);
     ANTsRegistration->SetOutputDirectory( destRoot );
-    ANTsRegistration->SetOutputPrefix("test-test-");
+    ANTsRegistration->SetOutputPrefix("ANTs-");
     ANTsRegistration->SetReferenceFileName(paramFile["regTemplatePath"].get<std::string>());
-    ANTsRegistration->SetFloatingFileName("ute2-test.nii.gz");    
+
+    boost::filesystem::path floatFileName = destRoot;
+    floatFileName /= "ute2.nii.gz";
+    ANTsRegistration->SetFloatingFileName(floatFileName);    
     ANTsRegistration->Update();
   } catch (bool) {
     LOG(ERROR) << "Error during registration!";

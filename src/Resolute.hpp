@@ -111,6 +111,8 @@ public:
   void SetUTEImage2(const TInputImage* ute2);
   void SetMaskImage(const TMaskImage* mask);
 
+  void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
+
 protected:
   ResoluteImageFilter();
   ~ResoluteImageFilter(){};
@@ -135,6 +137,7 @@ protected:
   typename InternalMaskImageType::Pointer _airMask;
   typename InternalMaskImageType::Pointer _patVolMask;
 
+  boost::filesystem::path _dstDir;
 
   struct cluster_coord {
     unsigned int x,y;
@@ -317,7 +320,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
   typedef itk::ImageFileWriter<HistoImageType> WriterType;
   WriterType::Pointer writer = WriterType::New();
 
-  writer->SetFileName("histo.mhd");
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "histogram.mhd";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(_histogram);
 
   try {
@@ -351,7 +356,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeAirMask(){
   typedef itk::ImageFileWriter<InternalMaskImageType> WriterType;
   typename WriterType::Pointer writer = WriterType::New();
 
-  writer->SetFileName("air.nii.gz");
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "air.nii.gz";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(_airMask);
 
   try {
@@ -431,7 +438,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakePatientVolumeMask(){
   typedef itk::ImageFileWriter<InternalMaskImageType> WriterType;
   typename WriterType::Pointer writer = WriterType::New();
 
-  writer->SetFileName("patient_vol.nii.gz");
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "patient_vol.nii.gz";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(connected->GetOutput());
 
   try {
@@ -489,7 +498,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
   typedef itk::ImageFileWriter<TInputImage> WriterType;
   typename WriterType::Pointer writer = WriterType::New();
 
-  writer->SetFileName("R2s.nii.gz");
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "R2s.nii.gz";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(maskFilter->GetOutput());
 
   try {
@@ -645,7 +656,10 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImag
 
   typedef itk::ImageFileWriter< HistoImageType  > HistoWriterType;
   HistoWriterType::Pointer outputWriter = HistoWriterType::New();
-  outputWriter->SetFileName("kmeans.mhd");
+
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "k-means.mhd";
+  outputWriter->SetFileName(outFileName.string());
   outputWriter->SetInput(outputImage);
   outputWriter->Update();
   //Test histo end
@@ -726,7 +740,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::NormaliseUTE(){
   typedef itk::ImageFileWriter<TInputImage> WriterType;
   typename WriterType::Pointer writer = WriterType::New();
 
-  writer->SetFileName("ute1-test.nii.gz");
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "ute1.nii.gz";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(mult->GetOutput());
 
   try {
@@ -748,7 +764,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::NormaliseUTE(){
   mult->SetInput1(ute2);
   mult->SetConstant(scaleFact2);
 
-  writer->SetFileName("ute2-test.nii.gz");
+  outFileName = _dstDir;
+  outFileName /= "ute2.nii.gz";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(mult->GetOutput());
 
   try {
@@ -775,7 +793,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::NormaliseUTE(){
 
   _sumUTE = duplicator->GetOutput();
 
-  writer->SetFileName("snUTE-test.nii.gz");
+  outFileName = _dstDir;
+  outFileName /= "snUTE-test.nii.gz";
+  writer->SetFileName(outFileName.string());
   writer->SetInput(_sumUTE);
 
   try {
