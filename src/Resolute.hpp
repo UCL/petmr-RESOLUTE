@@ -634,8 +634,8 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImag
 
   while ( iter != membershipSample->End() )
   {
-    DLOG(INFO) << "measurement vector = " << iter.GetMeasurementVector()
-              << "class label = " << iter.GetClassLabel();
+    //DLOG(INFO) << "measurement vector = " << iter.GetMeasurementVector()
+    //          << "class label = " << iter.GetClassLabel();
 
     int classLabel = iter.GetClassLabel();
     outputIterator.Set(classLabel);

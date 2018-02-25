@@ -33,6 +33,7 @@
 #include "ExtractDicomImages.hpp"
 #include "ExtractMaskImages.hpp"
 #include "Resolute.hpp"
+#include "ANTsReg.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -304,14 +305,22 @@ int main(int argc, char **argv)
     LOG(ERROR) << "Aborting!";
     return EXIT_FAILURE;    
   }
-  //Histogram normalisation 2.4
 
-  //Air mask 2.4.1
+  typedef reg::ANTsReg<ImageType> ANTsRegistrationType;
+  std::unique_ptr<ANTsRegistrationType>ANTsRegistration(new ANTsRegistrationType);
 
-  //Patient volume 2.4.2
-  //  - Region growing
-
-  //Bone R2* 2.4.3
+  try {
+    ANTsRegistration->SetParams(paramFile);
+    ANTsRegistration->SetOutputDirectory( destRoot );
+    ANTsRegistration->SetOutputPrefix("test-test-");
+    ANTsRegistration->SetReferenceFileName(paramFile["regTemplatePath"].get<std::string>());
+    ANTsRegistration->SetFloatingFileName("ute2-test.nii.gz");    
+    ANTsRegistration->Update();
+  } catch (bool) {
+    LOG(ERROR) << "Error during registration!";
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;  
+  }
 
   //Registration 2.4.4
 
