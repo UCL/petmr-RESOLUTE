@@ -24,6 +24,9 @@
 #define _RESOLUTE_HPP_
 
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/regex.hpp>
+
 #include <glog/logging.h>
 #include <nlohmann/json.hpp>
 
@@ -59,6 +62,10 @@
 #include <itkLogImageFilter.h>
 
 #include "ANTsReg.hpp"
+#include <antsRegistrationTemplateHeader.h>
+#include <antsApplyTransforms.h>
+
+
 
 //#include <itkVotingBinaryHoleFillFloodingImageFilter.h>
 /*
@@ -130,6 +137,8 @@ protected:
   void MakePatientVolumeMask();
   void MakeR2s();
   void PerformRegistration();
+  void InvertMasks(const boost::filesystem::path &src, const boost::filesystem::path &dst);
+
 
   typename HistoImageType::Pointer _histogram;
 
@@ -553,6 +562,45 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::PerformRegistration(){
 }
 
 template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(const boost::filesystem::path &src, const boost::filesystem::path &dst){
+
+  boost::filesystem::path targetFileName = _dstDir;
+  targetFileName /= "ute2.nii.gz";
+
+  boost::filesystem::path nrrTransform = _dstDir;
+  nrrTransform /= "ANTs-1InverseWarp.nii.gz";  
+
+  boost::filesystem::path affTransform = _dstDir;
+  affTransform /= "ANTs-0GenericAffine.mat";  
+
+  //boost::filesystem::path floatFileName = "/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_asym_09a_nifti/mni_icbm152_nlin_asym_09a/mastoid.nii.gz";
+  //boost::filesystem::path outputFile = _dstDir;
+  //outputFile /= "mastoid.nii.gz"; 
+
+  std::stringstream ss;
+
+  ss << "--verbose 0 ";
+  ss << "--default-value 0 ";
+  ss << "--interpolation Linear ";
+  ss << "--reference-image " << targetFileName.string() << " ";
+  ss << "--transform [" << affTransform.string() << ",1] " << nrrTransform.string() << " ";
+
+  ss << "--input " << src.string() << " ";
+  ss << "--output " << dst.string();
+
+  LOG(INFO) << "Mask inversion parameters:";
+  LOG(INFO) << "";
+  LOG(INFO) << ss.str();
+  LOG(INFO) << "";  
+
+  std::vector<std::string> invertArgs;
+  boost::split_regex(invertArgs, ss.str(), boost::regex( " " ) ) ;
+
+  ants::antsApplyTransforms( invertArgs, &std::cout);
+
+}
+
+template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage ){
 
   LOG(INFO) << "Starting k-means";
@@ -879,13 +927,31 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   PerformRegistration();
   LOG(INFO) << "Registration complete.";
 
+  LOG(INFO) << "Inverting masks";
+
+  boost::filesystem::path mni = _jsonParams["regTemplatePath"].template get<std::string>();
+  mni = mni.parent_path();
+
+  std::vector<std::string> masks = {"mastoid.nii.gz", "frontal_sinus.nii.gz", "nasal.nii.gz", "skull_base.nii.gz"};
+
+  for (auto m : masks){
+    boost::filesystem::path srcPath = mni;
+    srcPath /= m;
+
+    boost::filesystem::path dstPath = _dstDir;
+    dstPath /= m;
+    InvertMasks(srcPath, dstPath);
+  }
+
+  LOG(INFO) << "Inversion complete.";
+
 
   //Apply masking 2.4.5
 
   //Scaling
 
   //Output images
-  
+
 }
 
 }//namespace ns

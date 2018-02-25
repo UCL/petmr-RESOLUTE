@@ -1,4 +1,7 @@
-add_executable(resolute Resolute.cpp ${ANTs_SOURCE_DIR}/Examples/antsRegistration.cxx)
+add_executable(resolute Resolute.cpp 
+  ${ANTs_SOURCE_DIR}/Examples/antsRegistration.cxx
+  ${ANTs_SOURCE_DIR}/Examples/antsApplyTransforms.cxx
+  )
 target_link_libraries(resolute 
       ${ITK_LIBRARIES}  
       ${Boost_LIBRARIES}

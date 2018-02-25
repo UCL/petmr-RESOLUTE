@@ -33,6 +33,7 @@ include_directories(${ANTs_SOURCE_DIR}/Temporary)
 include_directories(${ANTs_SOURCE_DIR}/Tensor)
 include_directories(${ANTs_SOURCE_DIR}/Utilities)
 include_directories(${ANTs_SOURCE_DIR}/Examples)
+include_directories(${ANTs_SOURCE_DIR}/Examples/include)
 include_directories(${ANTs_SOURCE_DIR}/ImageRegistration)
 
 link_directories(${ANTs_LIBRARY_DIR})

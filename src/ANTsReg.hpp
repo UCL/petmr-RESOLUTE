@@ -266,7 +266,7 @@ void ANTsReg<TImage>::Update(){
   LOG(INFO) << "";
   LOG(INFO) << _argList;
   LOG(INFO) << "";
-  
+
   std::vector<std::string> finalArgs;
 
   int x=1;
