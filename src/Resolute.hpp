@@ -932,7 +932,16 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   boost::filesystem::path mni = _jsonParams["regTemplatePath"].template get<std::string>();
   mni = mni.parent_path();
 
-  std::vector<std::string> masks = {"mastoid.nii.gz", "frontal_sinus.nii.gz", "nasal.nii.gz", "skull_base.nii.gz"};
+  std::vector<std::string> masks = {
+    "mastoid.nii.gz", 
+    "frontal_sinus.nii.gz",
+    "nasal.nii.gz",
+    "skull_base.nii.gz",
+    "gm.nii.gz",
+    "wm.nii.gz",
+    "csf.nii.gz",
+    "brain_mask.nii.gz"
+  };
 
   for (auto m : masks){
     boost::filesystem::path srcPath = mni;
