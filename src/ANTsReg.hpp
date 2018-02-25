@@ -51,7 +51,7 @@ public:
   //DicomReader();
   ANTsReg();
 
-  void SetParams(const nlohmann::json &params) { _regParams = params; };
+  void SetParams(const nlohmann::json &params);
   void SetOutputDirectory(const boost::filesystem::path outDir);
   void SetOutputPrefix(const std::string s){ _prefix = s; };
   void SetReferenceFileName(const boost::filesystem::path refFileName);
@@ -72,18 +72,9 @@ protected:
   boost::filesystem::path _floatFileName;
 
   nlohmann::json _regParams;
-  std::string _argList;
+  bool _bDefaultParams = true;
 
-};
-
-//Constructor
-template <typename TImage>
-ANTsReg<TImage>::ANTsReg()
-{
-
-  DLOG(INFO) << "Initialised ANTsReg.";
-
-  _argList = "--verbose 1 --dimensionality 3 \
+  const std::string _defaultArgs = "--verbose 0 --dimensionality 3 \
   --float 0 --collapse-output-transforms 1 \
   --output [<%%PREFIX%%>,<%%WARPEDIMG%%>,<%%INVWARPEDIMG%%>] \
   --interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] \
@@ -97,6 +88,20 @@ ANTsReg<TImage>::ANTsReg()
   --transform BSplineSyN[0.1,26,0,3] \
   --metric CC[<%%REF%%>,<%%FLOAT%%>,1,4] \
   --convergence [10x7x5x5,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox";
+
+  std::string _argList;
+
+};
+
+//Constructor
+template <typename TImage>
+ANTsReg<TImage>::ANTsReg()
+{
+
+  DLOG(INFO) << "Initialised ANTsReg.";
+
+  //Use defaults unless set otherwise via SetParams;
+  _argList = _defaultArgs;
 
 }
 
@@ -208,8 +213,15 @@ void ANTsReg<TImage>::SetFloatingFileName(const boost::filesystem::path floatFil
 }
 
 template <typename TImage>
-void ANTsReg<TImage>::InsertParam(const std::string &key, const std::string &info){
+void ANTsReg<TImage>::SetParams(const nlohmann::json &params){ 
 
+  _argList = params.get<std::string>();
+  _bDefaultParams = false;
+
+};
+
+template <typename TImage>
+void ANTsReg<TImage>::InsertParam(const std::string &key, const std::string &info){
 
   std::string target = "<%%" + key + "%%>";
   std::string::size_type n = _argList.find(target);
@@ -223,21 +235,6 @@ void ANTsReg<TImage>::InsertParam(const std::string &key, const std::string &inf
 
 template <typename TImage>
 void ANTsReg<TImage>::Update(){
-
-/*std::string argList = "--verbose 1 --dimensionality 3 \
---float 0 --collapse-output-transforms 1 \
---output [reg-out/fullSyN,reg-out/fullSyNWarped.nii.gz,reg-out/fullSyNInverseWarped.nii.gz] \
---interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] \
---initial-moving-transform [/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1] \
---transform Rigid[0.1] \
---metric MI[/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1,32,Regular,0.25] \
---convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox \
---transform Affine[0.1] \
---metric MI[/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1,32,Regular,0.25] \
---convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox \
---transform BSplineSyN[0.1,26,0,3] \
---metric CC[/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1,4] \
---convergence [10x7x5x5,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox";*/
 
   boost::filesystem::path fullPrefix = _outDir;
   fullPrefix /= _prefix;
@@ -261,19 +258,31 @@ void ANTsReg<TImage>::Update(){
 
   boost::split_regex( args, _argList, boost::regex( " " ) ) ;
 
+  if (_bDefaultParams){
+    LOG(WARNING) << "No registration parameters set. Using defaults!";
+  }
+
+  LOG(INFO) << "Registration parameters:";
+  LOG(INFO) << "";
+  LOG(INFO) << _argList;
+  LOG(INFO) << "";
+  
   std::vector<std::string> finalArgs;
 
   int x=1;
   for (auto a : args){
     if (a != "") {
       finalArgs.push_back(a);
-      LOG(INFO) << x << "\t\t" << a;
+      DLOG(INFO) << x << "\t\t" << a;
       x++;
     }
   }
 
   LOG(INFO) << "Starting ANTs registration. This will take a while...";
-    ants::antsRegistration( finalArgs, &std::cout);
+  google::FlushLogFiles(google::INFO);
+
+  ants::antsRegistration( finalArgs, &std::cout);
+
   LOG(INFO) << "Registration complete!";
 
   

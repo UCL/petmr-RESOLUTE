@@ -310,7 +310,7 @@ int main(int argc, char **argv)
   std::unique_ptr<ANTsRegistrationType>ANTsRegistration(new ANTsRegistrationType);
 
   try {
-    ANTsRegistration->SetParams(paramFile);
+    ANTsRegistration->SetParams(paramFile["regArgs"]);
     ANTsRegistration->SetOutputDirectory( destRoot );
     ANTsRegistration->SetOutputPrefix("test-test-");
     ANTsRegistration->SetReferenceFileName(paramFile["regTemplatePath"].get<std::string>());

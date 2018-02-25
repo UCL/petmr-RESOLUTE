@@ -111,7 +111,7 @@ namespace ns {
     "ANTS",
     "",
     "",
-    "",
+    "--verbose 0 --dimensionality 3 --float 0 --collapse-output-transforms 1 --output [<%%PREFIX%%>,<%%WARPEDIMG%%>,<%%INVWARPEDIMG%%>] --interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] --initial-moving-transform [<%%REF%%>,<%%FLOAT%%>,1] --transform Rigid[0.1] --metric MI[<%%REF%%>,<%%FLOAT%%>,1,32,Regular,0.25] --convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --transform Affine[0.1] --metric MI[<%%REF%%>,<%%FLOAT%%>,1,32,Regular,0.25] --convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --transform BSplineSyN[0.1,26,0,3] --metric CC[<%%REF%%>,<%%FLOAT%%>,1,4] --convergence [10x7x5x5,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox",
   };
 
 bool ValidateJSON(const nlohmann::json j){
