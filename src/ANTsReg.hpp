@@ -261,14 +261,19 @@ void ANTsReg<TImage>::Update(){
 
   boost::split_regex( args, _argList, boost::regex( " " ) ) ;
 
+  std::vector<std::string> finalArgs;
+
   int x=1;
   for (auto a : args){
-    LOG(INFO) << x << "\t\t" << a;
-    x++;
+    if (a != "") {
+      finalArgs.push_back(a);
+      LOG(INFO) << x << "\t\t" << a;
+      x++;
+    }
   }
 
   LOG(INFO) << "Starting ANTs registration. This will take a while...";
-    ants::antsRegistration( args, &std::cout);
+    ants::antsRegistration( finalArgs, &std::cout);
   LOG(INFO) << "Registration complete!";
 
   
