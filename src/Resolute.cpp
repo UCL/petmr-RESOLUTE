@@ -200,7 +200,7 @@ void CreateDICOMSeriesFromMRAC(
     system( args.c_str() );
 
     args = exec + " " + "-m 0008,103E=\"RESOLUTE MRAC\"" + " -m 0020,0011=1999 -m 0020,000E=" + newSeriesUID + " -gin \"" + outFilePath.string() + "\"";
-    LOG(INFO) << "args= " << args;
+    DLOG(INFO) << "args= " << args;
     system( args.c_str() );
 
     fs::path finalFilePath = finalPath;
