@@ -28,6 +28,15 @@
 #include <glog/logging.h>
 #include <nlohmann/json.hpp>
 
+#include <itkCastImageFilter.h>
+#include <itkImageSeriesWriter.h>
+#include <itkNumericSeriesFileNames.h>
+#include <itkGDCMSeriesFileNames.h>
+#include <gdcmReader.h>
+#include <gdcmWriter.h>
+#include <gdcmAttribute.h>
+#include <gdcmUIDGenerator.h>
+
 #include "EnvironmentInfo.h"
 #include "ParamSkeleton.hpp"
 #include "ExtractDicomImages.hpp"
@@ -37,6 +46,145 @@
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 using json = nlohmann::json;
+
+typedef itk::Image<float,3> ImageType;
+
+typedef uint16_t OutputPixelType;
+typedef itk::Image<OutputPixelType,3> OutputImageType;
+
+const char *const INMUIDROOT = "1.2.826.0.1.3680043.9.6705";
+
+static std::string GetUUID()
+{
+    //Produces a new INM UID for DICOM data.
+    std::string newUID;
+
+    gdcm::UIDGenerator gen;
+    gen.SetRoot(INMUIDROOT);
+    newUID = (std::string)gen.Generate();
+
+    if (!gen.IsValid(newUID.c_str()))
+        return "";
+
+    return newUID;
+}
+
+int GetDICOMImageNumber(const fs::path src){
+
+    std::unique_ptr<gdcm::Reader> dicomReader(new gdcm::Reader);
+    dicomReader->SetFileName(src.string().c_str());
+
+    if (!dicomReader->Read()) {
+      LOG(INFO) << "Unable to read as DICOM file";
+      throw false;
+    }
+
+    const gdcm::DataSet &ds = dicomReader->GetFile().GetDataSet();
+
+    const gdcm::Tag instanceNumber(0x0020,0x0013);
+    const gdcm::DataElement &pdde = ds.GetDataElement(instanceNumber);
+
+    std::stringstream instanceNumberVal;
+    instanceNumberVal << (char *) pdde.GetByteValue()->GetPointer();
+
+    DLOG(INFO) << "Image number: " << instanceNumberVal.str();
+
+    int outputNo = -1;
+    instanceNumberVal >> outputNo;
+
+    return outputNo;
+}
+
+void CreateDICOMSeriesFromMRAC(
+    const ImageType::Pointer &img, 
+    const std::vector<fs::path> &originalFiles,
+    const fs::path destDir){
+
+  typedef itk::CastImageFilter< ImageType, OutputImageType> CastFilterType;
+  CastFilterType::Pointer castFilter = CastFilterType::New();
+
+  castFilter->SetInput(img);
+
+  try {
+    castFilter->Update();
+  } catch (itk::ExceptionObject & err) {
+      LOG(ERROR) << "Cannot cast from ImageType to OutputImageType!";
+      throw false;
+  }
+
+  typedef itk::Image<OutputImageType::PixelType, 2> ImageType2D;
+  typedef itk::ImageSeriesWriter< OutputImageType, ImageType2D > SeriesWriterType;
+
+  const OutputImageType::RegionType& inputRegion = img->GetLargestPossibleRegion();
+  const OutputImageType::SizeType& inputSize = inputRegion.GetSize();
+  const OutputImageType::SpacingType& inputSpacing = img->GetSpacing();
+
+  typedef itk::GDCMSeriesFileNames NamesGeneratorType;
+  NamesGeneratorType::Pointer namesGenerator = NamesGeneratorType::New();
+
+  // Generate the file names
+  typedef itk::NumericSeriesFileNames OutputNamesGeneratorType;
+  OutputNamesGeneratorType::Pointer outputNames = OutputNamesGeneratorType::New();
+
+  fs::path dstPath = destDir;
+  
+   //Create out destination directory if it doesn't already exist.
+  if (!fs::exists(dstPath)){
+    try {
+      fs::create_directories(dstPath);
+    } catch (const fs::filesystem_error &e){
+      LOG(ERROR) << "Cannot create destination folder : " << dstPath;
+      throw false;
+    }
+  }
+
+  std::string seriesFormat = dstPath.string() + "/" + "IM%d.img";
+  LOG(INFO) << "SeriesFormat:" << seriesFormat;
+
+  outputNames->SetSeriesFormat (seriesFormat.c_str());
+  outputNames->SetStartIndex(1);
+  outputNames->SetEndIndex(inputSize[2]);
+
+  SeriesWriterType::Pointer seriesWriter = SeriesWriterType::New();
+  seriesWriter->SetInput( castFilter->GetOutput() );
+  seriesWriter->SetFileNames( outputNames->GetFileNames() );
+
+  try {
+    LOG(INFO) << "Writing raw files to " << dstPath;
+    seriesWriter->Update();
+  } catch (itk::ExceptionObject & err) {
+    LOG(ERROR) << "Cannot write output slices!";
+    throw false;
+  }
+
+  std::string newSeriesUID = GetUUID();
+
+  std::string exec = "dcmodify";
+
+  for (int x=0; x < originalFiles.size(); x++){
+    fs::path outFilePath = dstPath;
+    outFilePath /= "mumap-";
+    outFilePath += boost::lexical_cast<std::string>(x+1);
+    outFilePath += ".dcm";
+    fs::copy(originalFiles[x], outFilePath);
+
+    fs::path pctfile = dstPath;
+    pctfile /= "IM";
+    pctfile += boost::lexical_cast<std::string>(GetDICOMImageNumber(originalFiles[x]));
+    pctfile += ".img";
+
+    std::string args = exec + " " + "-nb -if PixelData=\"" + pctfile.string() + "\" \"" + outFilePath.string() + "\"";
+    DLOG(INFO) << "args= " << args;
+    system( args.c_str() );
+
+    args = exec + " " + "-m 0008,103E=\"RESOLUTE MRAC\"" + " -m 0020,0011=1999 -m 0020,000E=" + newSeriesUID + " -gin \"" + outFilePath.string() + "\"";
+    LOG(INFO) << "args= " << args;
+    system( args.c_str() );
+
+
+  }
+
+}
 
 int main(int argc, char **argv)
 {
@@ -220,7 +368,6 @@ int main(int argc, char **argv)
 
   std::vector<std::string> srcSeriesUIDs = {mumapUID, ute1UID, ute2UID};
 
-  typedef itk::Image<float,3> ImageType;
   typedef dcm::ReadDicomSeries<ImageType> SeriesReadType;
 
   //Read mu-map and both UTEs and write file.
@@ -328,6 +475,12 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;   
   }
   //Modify DICOM data here
+
+  std::vector<fs::path> mracfileNames = tree->GetSeriesFileList(mumapUID);
+
+  fs::path finalDest = destRoot;
+  finalDest /= "DICOM";
+  CreateDICOMSeriesFromMRAC(mult->GetOutput(), mracfileNames, finalDest);
 
 
   //Print total execution time
