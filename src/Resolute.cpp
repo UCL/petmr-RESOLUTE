@@ -126,14 +126,30 @@ void CreateDICOMSeriesFromMRAC(
   typedef itk::NumericSeriesFileNames OutputNamesGeneratorType;
   OutputNamesGeneratorType::Pointer outputNames = OutputNamesGeneratorType::New();
 
+  fs::path tmpDir = fs::unique_path();
+
   fs::path dstPath = destDir;
+  dstPath /= tmpDir;
   
-   //Create out destination directory if it doesn't already exist.
+   //Create our temp destination directory if it doesn't already exist.
   if (!fs::exists(dstPath)){
     try {
       fs::create_directories(dstPath);
     } catch (const fs::filesystem_error &e){
-      LOG(ERROR) << "Cannot create destination folder : " << dstPath;
+      LOG(ERROR) << "Cannot create tmp folder : " << dstPath;
+      throw false;
+    }
+  }
+
+  fs::path finalPath = destDir;
+  finalPath /= "RESOLUTE_MRAC";
+  
+   //Create out destination directory if it doesn't already exist.
+  if (!fs::exists(finalPath)){
+    try {
+      fs::create_directories(finalPath);
+    } catch (const fs::filesystem_error &e){
+      LOG(ERROR) << "Cannot create destination folder : " << finalPath;
       throw false;
     }
   }
@@ -166,7 +182,13 @@ void CreateDICOMSeriesFromMRAC(
     outFilePath /= "mumap-";
     outFilePath += boost::lexical_cast<std::string>(x+1);
     outFilePath += ".dcm";
-    fs::copy(originalFiles[x], outFilePath);
+
+    try {
+      fs::copy(originalFiles[x], outFilePath);
+    } catch (const fs::filesystem_error &e){
+      LOG(ERROR) << "Cannot copy original MRAC image to " << outFilePath;
+      throw false;
+    }
 
     fs::path pctfile = dstPath;
     pctfile /= "IM";
@@ -181,7 +203,29 @@ void CreateDICOMSeriesFromMRAC(
     LOG(INFO) << "args= " << args;
     system( args.c_str() );
 
+    fs::path finalFilePath = finalPath;
+    finalFilePath /= newSeriesUID;
+    finalFilePath += ".";
+    finalFilePath += boost::lexical_cast<std::string>(x+1);
+    finalFilePath += ".dcm";
 
+    try {
+      fs::rename(outFilePath, finalFilePath);
+    } catch (const fs::filesystem_error &e){
+      LOG(ERROR) << "Cannot move new MRAC image to " << finalFilePath;
+      throw false;
+    }    
+
+  }
+
+  //Delete the temp. folder.
+  try
+  {
+    if(fs::exists(dstPath))
+      fs::remove_all(dstPath);
+  } 
+  catch(const fs::filesystem_error & e){
+      LOG(WARNING) << "Could not delete temp. directory: " << dstPath;
   }
 
 }
