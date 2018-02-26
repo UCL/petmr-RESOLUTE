@@ -862,17 +862,23 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
     throw(ex);    
   }
 
+  const float v2 = pow( 5.0 / (2.0 * sqrt(2.0 * log(2.0))),2.0);
 
-  //Load air
-  //Load sinus
-  //Load R2*
-  //Load skull base
-  //Load mastoid
-  //Load Patient vol
-  //Load nasal
-  //Load snUTE
+  blurFilter->SetInput( outputImage );
+  blurFilter->SetVariance( v2 );
+  blurFilter->Update();
 
+  outFileName = _dstDir;
+  outFileName /= "sRESOLUTE.nii.gz";
+  writer->SetFileName(outFileName.string());
+  writer->SetInput(blurFilter->GetOutput());
 
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write smoothed RESOLUTE image!";
+    throw(ex);    
+  }
 
 }
 
