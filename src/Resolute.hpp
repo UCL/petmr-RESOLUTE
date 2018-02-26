@@ -55,6 +55,7 @@
 #include <itkConnectedThresholdImageFilter.h>
 #include <itkRelabelComponentImageFilter.h>
 #include <itkBinaryFillholeImageFilter.h>
+#include <itkDiscreteGaussianImageFilter.h>
 
 #include "itkBinaryMorphologicalClosingImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
@@ -79,6 +80,25 @@ namespace ns {
 inline float GetHUfromR2s(float r){
   //From Ladefoged et al. Figure 1.
   return 1.351e-6 * pow(r,3.0) - 3.617e-3 * pow(r,2.0) + 3.841 * r - 19.46;
+}
+
+inline float GetMU(float r){
+  //Siemens 120 kVp slope. Carney et al. 2006
+  const float kVp = 120;
+  const float a1 = 9.6e-5;
+  const float b1 = 9.6e-2;
+  const float a2 = 5.10e-5;
+  const float b2 = 4.71e-2;
+  const float breakPointHU = 47;
+
+  float hu = GetHUfromR2s(r);
+  float mu = 0.0;
+  if ( hu <= breakPointHU)
+    mu = a1 * hu + b1;
+  else if ( hu > breakPointHU)
+    mu = a2 * (hu+1000) + b2;
+
+  return mu;
 }
 
 template< typename TInputImage, typename TMaskImage>
@@ -124,6 +144,21 @@ public:
   void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
   void SetJSONParams(const nlohmann::json &j){ _jsonParams = j;};
 
+  //mu-values (cm-1)
+  const float BRAIN_MU = 0.099;
+  const float CSF_MU = 0.096;
+  const float FRONTAL_SINUS_MU = 0.0;
+  const float AIR_TISSUE_MIX_MU = 0.1;
+  const float MASTOID_MU = 0.011;
+  const float OUTSIDE_MU = 0.0;
+  const float NASAL_OUTSIDE_MU = 0.094;
+  const float SN_OVER_1600_MU = 0.094;
+  const float SN_BELOW_800_MU = 0.01;
+  const float SN_800_1600_MU = 0.06;
+  const float R2S_LESS_300_MU = 0.0925;
+
+  const float FWHM = 3.0;
+
 protected:
   ResoluteImageFilter();
   ~ResoluteImageFilter(){};
@@ -137,8 +172,10 @@ protected:
   void MakePatientVolumeMask();
   void MakeR2s();
   void PerformRegistration();
-  void InvertMasks(const boost::filesystem::path &src, const boost::filesystem::path &dst);
+  void InvertMasks(const boost::filesystem::path &src, const boost::filesystem::path &dst, const std::string &interp);
+  void ApplyAlgorithm();
 
+  void LoadImageFromFile(const boost::filesystem::path &src, typename TInputImage::Pointer &dst);
 
   typename HistoImageType::Pointer _histogram;
 
@@ -528,7 +565,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
   
   typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
   typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
-  duplicator->SetInputImage(divideFilter->GetOutput());
+  duplicator->SetInputImage(maskFilter->GetOutput());
   duplicator->Update();
   _R2s = duplicator->GetOutput();
 
@@ -562,7 +599,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::PerformRegistration(){
 }
 
 template< typename TInputImage, typename TMaskImage>
-void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(const boost::filesystem::path &src, const boost::filesystem::path &dst){
+void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(
+  const boost::filesystem::path &src, const boost::filesystem::path &dst,
+  const std::string &interp){
 
   boost::filesystem::path targetFileName = _dstDir;
   targetFileName /= "ute2.nii.gz";
@@ -581,7 +620,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(const boost::file
 
   ss << "--verbose 0 ";
   ss << "--default-value 0 ";
-  ss << "--interpolation Linear ";
+  ss << "--interpolation " << interp << " ";
   ss << "--reference-image " << targetFileName.string() << " ";
   ss << "--transform [" << affTransform.string() << ",1] " << nrrTransform.string() << " ";
 
@@ -597,6 +636,243 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(const boost::file
   boost::split_regex(invertArgs, ss.str(), boost::regex( " " ) ) ;
 
   ants::antsApplyTransforms( invertArgs, &std::cout);
+
+}
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::LoadImageFromFile(
+  const boost::filesystem::path &src, typename TInputImage::Pointer &dst){
+
+  typedef itk::ImageFileReader<TInputImage> ReaderType;
+  typename ReaderType::Pointer reader = ReaderType::New();
+
+  reader->SetFileName(src.string());
+
+  try {
+    reader->Update();
+    typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
+    typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(reader->GetOutput());
+    duplicator->Update();
+    dst = duplicator->GetOutput();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not read " << src;
+    throw(ex);    
+  }
+
+}
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
+
+  boost::filesystem::path imgPath = _dstDir;
+  //Load GM
+  imgPath /= "gm.nii.gz";
+  typename TInputImage::Pointer gm = TInputImage::New();
+  LoadImageFromFile(imgPath, gm);
+
+  //Load WM
+  imgPath = _dstDir;
+  imgPath /= "wm.nii.gz";
+  typename TInputImage::Pointer wm = TInputImage::New();
+  LoadImageFromFile(imgPath, wm);
+
+  //Load CSF
+  imgPath = _dstDir;
+  imgPath /= "csf.nii.gz";
+  typename TInputImage::Pointer csf = TInputImage::New();
+  LoadImageFromFile(imgPath, csf);
+
+  //(GM+WM)
+  typedef typename itk::AddImageFilter<TInputImage,TInputImage> AddFilterType;
+  typename AddFilterType::Pointer addFilter = AddFilterType::New();
+
+  addFilter->SetInput1(gm);
+  addFilter->SetInput2(wm);
+
+  //(GM+WM) * MU = brain;
+  typedef typename itk::MultiplyImageFilter<TInputImage,TInputImage> MultiplyFilterType;
+  typename MultiplyFilterType::Pointer mult = MultiplyFilterType::New();
+  mult->SetInput1(addFilter->GetOutput());
+  mult->SetConstant(BRAIN_MU);
+
+  //CSF * MU;
+  typename MultiplyFilterType::Pointer mult2 = MultiplyFilterType::New();
+  mult2->SetInput1(csf);
+  mult2->SetConstant(CSF_MU);
+
+  //brain + CSF
+  typename AddFilterType::Pointer addFilter2 = AddFilterType::New();
+  addFilter2->SetInput1(mult->GetOutput());
+  addFilter2->SetInput2(mult2->GetOutput());
+
+  try {
+    addFilter2->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write RESOLUTE image!";
+    throw(ex);    
+  }
+
+  typename TInputImage::Pointer brain = addFilter2->GetOutput();
+
+  //Smooth the R2* by FWHM.
+  const float variance = pow(FWHM / (2.0 * sqrt(2.0 * log(2.0))),2.0);
+
+  typedef itk::DiscreteGaussianImageFilter<TInputImage, TInputImage> GaussFilterType;
+  typename GaussFilterType::Pointer blurFilter = GaussFilterType::New();
+  blurFilter->SetInput(_R2s);
+  blurFilter->SetVariance( variance );
+  blurFilter->Update();
+
+  typename TInputImage::Pointer G = blurFilter->GetOutput();
+
+  typename TInputImage::Pointer outputImage = TInputImage::New();
+
+  typedef itk::ImageDuplicator<TInputImage> DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(GetUTEImage2());
+  duplicator->Update();
+  outputImage = duplicator->GetOutput();
+  outputImage->FillBuffer(0);
+
+  //Load brain_mask
+  imgPath = _dstDir;
+  imgPath /= "brain_mask.nii.gz";
+  typename TInputImage::Pointer brain_mask = TInputImage::New();
+  LoadImageFromFile(imgPath, brain_mask);
+
+  //Load frontal sinus
+  imgPath = _dstDir;
+  imgPath /= "frontal_sinus.nii.gz";
+  typename TInputImage::Pointer frontal = TInputImage::New();
+  LoadImageFromFile(imgPath, frontal);
+
+  //Load skull base
+  imgPath = _dstDir;
+  imgPath /= "skull_base.nii.gz";
+  typename TInputImage::Pointer skull_base = TInputImage::New();
+  LoadImageFromFile(imgPath, skull_base);
+
+  //Load mastoid
+  imgPath = _dstDir;
+  imgPath /= "mastoid.nii.gz";
+  typename TInputImage::Pointer mastoid = TInputImage::New();
+  LoadImageFromFile(imgPath, mastoid);
+
+  //Load nasal
+  imgPath = _dstDir;
+  imgPath /= "nasal.nii.gz";
+  typename TInputImage::Pointer nasal = TInputImage::New();
+  LoadImageFromFile(imgPath, nasal);
+
+
+  itk::ImageRegionConstIterator<TInputImage> brainMaskIt(brain_mask,brain_mask->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> brainIt(brain,brain->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> outIt(outputImage,outputImage->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<InternalMaskImageType> airIt(_airMask,_airMask->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> frontalIt(frontal,frontal->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> r2sIt(_R2s,_R2s->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> skBaseIt(skull_base,skull_base->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> mastIt(mastoid,mastoid->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<InternalMaskImageType> patVolIt(_patVolMask,_patVolMask->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> nasalIt(nasal,nasal->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> sumIt(_sumUTE,_sumUTE->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<TInputImage> gIt(G,G->GetLargestPossibleRegion());
+
+
+
+  while(!brainMaskIt.IsAtEnd())
+    {     
+      //If is brain
+      if (brainMaskIt.Get() == 1){
+        outIt.Set(brainIt.Get());
+      }
+      else { //Check if air
+        if (airIt.Get() == 1){
+          //If in Frontal sinus
+          if (frontalIt.Get() == 1){
+            outIt.Set(FRONTAL_SINUS_MU);
+          } else {
+            //Check mix
+            if (gIt.Get() > 300)
+              outIt.Set(AIR_TISSUE_MIX_MU);
+            else
+              outIt.Set(FRONTAL_SINUS_MU);
+          }
+
+        } else { // Check R2* > 100
+          float r2sVal = r2sIt.Get();
+          if (r2sVal > 100){
+            //Check skull base
+            if (skBaseIt.Get() == 0){ //If not skull base
+              outIt.Set( GetMU(r2sVal) ); // f(R2*)
+            } else {
+              if (mastIt.Get() == 1){ //If in mastoid space
+                outIt.Set( MASTOID_MU );
+              } else { // Check R2* > 300
+                if (r2sVal > 300)
+                  outIt.Set( GetMU(r2sVal) );
+                else
+                  outIt.Set(R2S_LESS_300_MU);
+              }
+            }
+
+          } else {
+            if (patVolIt.Get() == 0){//If outside patient volume
+              outIt.Set( OUTSIDE_MU );
+            } else {//If inside patient volume
+              if (nasalIt.Get() == 0){
+                outIt.Set( NASAL_OUTSIDE_MU );
+              }
+              else { // If inside nasal septa
+                float snUTEVal = sumIt.Get();
+                if (snUTEVal > 1600)
+                  outIt.Set( SN_OVER_1600_MU );
+                else if (snUTEVal > 800)
+                  outIt.Set( SN_800_1600_MU );
+                  else if (snUTEVal <= 800)
+                    outIt.Set( SN_BELOW_800_MU );
+              }
+            }
+          }
+        }
+      }
+
+      ++brainMaskIt; ++brainIt; ++airIt;
+      ++frontalIt; ++r2sIt; ++skBaseIt;
+      ++mastIt; ++patVolIt; ++nasalIt;
+      ++sumIt; ++gIt;
+      ++outIt;
+    }
+
+
+
+  typedef itk::ImageFileWriter<TInputImage> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "RESOLUTE.nii.gz";
+  writer->SetFileName(outFileName.string());
+  writer->SetInput(outputImage);
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write RESOLUTE image!";
+    throw(ex);    
+  }
+
+
+  //Load air
+  //Load sinus
+  //Load R2*
+  //Load skull base
+  //Load mastoid
+  //Load Patient vol
+  //Load nasal
+  //Load snUTE
+
+
 
 }
 
@@ -937,9 +1213,6 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
     "frontal_sinus.nii.gz",
     "nasal.nii.gz",
     "skull_base.nii.gz",
-    "gm.nii.gz",
-    "wm.nii.gz",
-    "csf.nii.gz",
     "brain_mask.nii.gz"
   };
 
@@ -949,14 +1222,30 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
 
     boost::filesystem::path dstPath = _dstDir;
     dstPath /= m;
-    InvertMasks(srcPath, dstPath);
+    InvertMasks(srcPath, dstPath, "NearestNeighbor");
   }
+
+  std::vector<std::string> tissues = {
+    "gm.nii.gz",
+    "wm.nii.gz",
+    "csf.nii.gz",
+  }; 
+
+  for (auto t : tissues){
+    boost::filesystem::path srcPath = mni;
+    srcPath /= t;
+
+    boost::filesystem::path dstPath = _dstDir;
+    dstPath /= t;
+    InvertMasks(srcPath, dstPath, "Linear");
+  }   
 
   LOG(INFO) << "Inversion complete.";
 
-
   //Apply masking 2.4.5
-
+  LOG(INFO) << "Applying RESOLUTE algorithm...";
+  ApplyAlgorithm();
+  LOG(INFO) << "RESOLUTE complete.";
   //Scaling
 
   //Output images
