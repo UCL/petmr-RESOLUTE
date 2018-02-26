@@ -768,24 +768,28 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
 
   itk::ImageRegionConstIterator<TInputImage> brainMaskIt(brain_mask,brain_mask->GetLargestPossibleRegion());
   itk::ImageRegionConstIterator<TInputImage> brainIt(brain,brain->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> csfIt(csf,csf->GetLargestPossibleRegion());
+
+  itk::ImageRegionConstIterator<InternalMaskImageType> airIt(_airMask,_airMask->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> frontalIt(frontal,frontal->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> r2sIt(_R2s,_R2s->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> skBaseIt(skull_base,skull_base->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> mastIt(mastoid,mastoid->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<InternalMaskImageType> patVolIt(_patVolMask,_patVolMask->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> nasalIt(nasal,nasal->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> sumIt(_sumUTE,_sumUTE->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<TInputImage> gIt(G,G->GetLargestPossibleRegion());
+
   itk::ImageRegionIterator<TInputImage> outIt(outputImage,outputImage->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<InternalMaskImageType> airIt(_airMask,_airMask->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> frontalIt(frontal,frontal->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> r2sIt(_R2s,_R2s->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> skBaseIt(skull_base,skull_base->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> mastIt(mastoid,mastoid->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<InternalMaskImageType> patVolIt(_patVolMask,_patVolMask->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> nasalIt(nasal,nasal->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> sumIt(_sumUTE,_sumUTE->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<TInputImage> gIt(G,G->GetLargestPossibleRegion());
-
-
 
   while(!brainMaskIt.IsAtEnd())
     {     
       //If is brain
       if (brainMaskIt.Get() == 1){
-        outIt.Set(brainIt.Get());
+        if (csfIt.Get() > 0.5 ) //If > 50% CSF
+          outIt.Set(CSF_MU);
+        else
+          outIt.Set(BRAIN_MU);
       }
       else { //Check if air
         if (airIt.Get() == 1){
@@ -841,7 +845,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
       ++brainMaskIt; ++brainIt; ++airIt;
       ++frontalIt; ++r2sIt; ++skBaseIt;
       ++mastIt; ++patVolIt; ++nasalIt;
-      ++sumIt; ++gIt;
+      ++sumIt; ++gIt; ++csfIt;
       ++outIt;
     }
 
