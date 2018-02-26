@@ -111,7 +111,7 @@ namespace ns {
     "ANTS",
     "",
     "",
-    "--verbose 0 --dimensionality 3 --float 0 --collapse-output-transforms 1 --output [<%%PREFIX%%>,<%%WARPEDIMG%%>,<%%INVWARPEDIMG%%>] --interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] --initial-moving-transform [<%%REF%%>,<%%FLOAT%%>,1] --transform Affine[0.1] --metric MI[<%%REF%%>,<%%FLOAT%%>,1,32,Regular,0.25] --convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --transform SyN[0.5,3,0] --metric CC[<%%REF%%>,<%%FLOAT%%>,1,4] --convergence [10x5x2,1e-6,10] --shrink-factors 4x2x1 --smoothing-sigmas 2x1x0mm",
+    "--verbose 0 --dimensionality 3 --float 1 --collapse-output-transforms 1 --output [<%%PREFIX%%>,<%%WARPEDIMG%%>,<%%INVWARPEDIMG%%>] --interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] --initial-moving-transform [<%%REF%%>,<%%FLOAT%%>,1] --transform Affine[0.1] --metric MI[<%%REF%%>,<%%FLOAT%%>,1,32,Regular,0.25] --convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --transform SyN[0.5,3,0] --metric CC[<%%REF%%>,<%%FLOAT%%>,1,4] --convergence [10x5x2,1e-6,10] --shrink-factors 4x2x1 --smoothing-sigmas 2x1x0mm",
   };
 
 bool ValidateJSON(const nlohmann::json j){
