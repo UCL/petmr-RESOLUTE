@@ -166,6 +166,7 @@ protected:
   typename TInputImage::ConstPointer GetMRACImage();
   typename TInputImage::ConstPointer GetUTEImage1();
   typename TInputImage::ConstPointer GetUTEImage2();
+
   typename TMaskImage::ConstPointer GetMaskImage();
 
   void MakeAirMask();
@@ -184,7 +185,6 @@ protected:
   typename TInputImage::Pointer _sumUTE;
   typename TInputImage::Pointer _R2s;
   typename TInputImage::Pointer _resolute;
-
 
   typename InternalMaskImageType::Pointer _airMask;
   typename InternalMaskImageType::Pointer _patVolMask;
@@ -272,7 +272,6 @@ typename TMaskImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::
   return static_cast< const TMaskImage * >
          ( this->ProcessObject::GetInput(3) );
 }
-
 
 template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
@@ -1287,9 +1286,12 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   LOG(INFO) << "Applying RESOLUTE algorithm...";
   ApplyAlgorithm();
   LOG(INFO) << "RESOLUTE complete.";
+
+  this->GraftOutput(_resolute);
   //Scaling
 
   //Output images
+
 
 }
 

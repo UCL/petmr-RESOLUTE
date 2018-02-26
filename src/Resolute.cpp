@@ -307,6 +307,26 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;    
   }
 
+  const float SIEMENS_VOX_SCALING = 10000.0;
+  typedef typename itk::MultiplyImageFilter<ImageType,ImageType> MultiplyFilterType;
+  typename MultiplyFilterType::Pointer mult = MultiplyFilterType::New();
+  mult->SetInput(resoluteFilter->GetOutput());
+  mult->SetConstant(SIEMENS_VOX_SCALING);
+
+  typedef itk::ImageFileWriter<ImageType> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  boost::filesystem::path outFileName = destRoot;
+  outFileName /= "RESOLUTE-mMR-scaling.nii.gz";
+  writer->SetFileName(outFileName.string());
+  writer->SetInput(mult->GetOutput());
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not scaled RESOLUTE image!";
+    return EXIT_FAILURE;   
+  }
   //Modify DICOM data here
 
 
