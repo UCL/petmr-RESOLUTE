@@ -183,6 +183,7 @@ protected:
   typename TInputImage::Pointer _normUTE2;
   typename TInputImage::Pointer _sumUTE;
   typename TInputImage::Pointer _R2s;
+  typename TInputImage::Pointer _resolute;
 
 
   typename InternalMaskImageType::Pointer _airMask;
@@ -690,6 +691,14 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
   addFilter->SetInput1(gm);
   addFilter->SetInput2(wm);
 
+  try {
+    addFilter->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write RESOLUTE image!";
+    throw(ex);    
+  }
+
+  /*
   //(GM+WM) * MU = brain;
   typedef typename itk::MultiplyImageFilter<TInputImage,TInputImage> MultiplyFilterType;
   typename MultiplyFilterType::Pointer mult = MultiplyFilterType::New();
@@ -711,9 +720,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
   } catch (itk::ExceptionObject &ex){
     LOG(ERROR) << "Could not write RESOLUTE image!";
     throw(ex);    
-  }
+  }*/
 
-  typename TInputImage::Pointer brain = addFilter2->GetOutput();
+  typename TInputImage::Pointer brain = addFilter->GetOutput();
 
   //Smooth the R2* by FWHM.
   const float variance = pow(FWHM / (2.0 * sqrt(2.0 * log(2.0))),2.0);
@@ -786,10 +795,11 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
     {     
       //If is brain
       if (brainMaskIt.Get() == 1){
-        if (csfIt.Get() > 0.5 ) //If > 50% CSF
-          outIt.Set(CSF_MU);
-        else
+        //outIt.Set(brainIt.Get());
+        if (brainIt.Get() > 0.5 ) //If > 50% brain
           outIt.Set(BRAIN_MU);
+        else
+          outIt.Set(CSF_MU);
       }
       else { //Check if air
         if (airIt.Get() == 1){
@@ -866,14 +876,35 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
     throw(ex);    
   }
 
-  const float v2 = pow( 5.0 / (2.0 * sqrt(2.0 * log(2.0))),2.0);
+  duplicator->SetInputImage(outputImage);
+  duplicator->Update();
+  _resolute = duplicator->GetOutput();
 
-  blurFilter->SetInput( outputImage );
+  const float smoothFWHM = 5.0;
+  const float v2 = pow( smoothFWHM / (2.0 * sqrt(2.0 * log(2.0))),2.0);
+
+  blurFilter->SetInput( _resolute );
   blurFilter->SetVariance( v2 );
   blurFilter->Update();
 
   outFileName = _dstDir;
   outFileName /= "sRESOLUTE.nii.gz";
+  writer->SetFileName(outFileName.string());
+  writer->SetInput(blurFilter->GetOutput());
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write smoothed RESOLUTE image!";
+    throw(ex);    
+  }
+
+  blurFilter->SetInput( this->GetMRACImage() );
+  blurFilter->SetVariance( v2 );
+  blurFilter->Update();
+
+  outFileName = _dstDir;
+  outFileName /= "sMRAC.nii.gz";
   writer->SetFileName(outFileName.string());
   writer->SetInput(blurFilter->GetOutput());
 
