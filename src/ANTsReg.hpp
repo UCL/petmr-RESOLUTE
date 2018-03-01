@@ -32,6 +32,8 @@
 #include <itkImageFileReader.h>
 
 #include <antsRegistrationTemplateHeader.h>
+#include <include/ants.h>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -281,7 +283,8 @@ void ANTsReg<TImage>::Update(){
   LOG(INFO) << "Starting ANTs registration. This will take a while...";
   google::FlushLogFiles(google::INFO);
 
-  ants::antsRegistration( finalArgs, &std::cout);
+  //ants::antsRegistration( finalArgs, &std::cout);
+  ants::ANTS( finalArgs, &std::cout);
 
   LOG(INFO) << "Registration complete!";
 

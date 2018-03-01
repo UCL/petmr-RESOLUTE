@@ -37,4 +37,4 @@ include_directories(${ANTs_SOURCE_DIR}/Examples/include)
 include_directories(${ANTs_SOURCE_DIR}/ImageRegistration)
 
 link_directories(${ANTs_LIBRARY_DIR})
-set(ANTS_LIBS antsUtilities)
+set(ANTS_LIBS antsUtilities l_ANTS)

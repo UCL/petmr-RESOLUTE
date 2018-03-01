@@ -607,10 +607,10 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(
   targetFileName /= "ute2.nii.gz";
 
   boost::filesystem::path nrrTransform = _dstDir;
-  nrrTransform /= "ANTs-1InverseWarp.nii.gz";  
+  nrrTransform /= "ANTs-InverseWarp.nii.gz";  
 
   boost::filesystem::path affTransform = _dstDir;
-  affTransform /= "ANTs-0GenericAffine.mat";  
+  affTransform /= "ANTs-Affine.txt";  
 
   //boost::filesystem::path floatFileName = "/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_asym_09a_nifti/mni_icbm152_nlin_asym_09a/mastoid.nii.gz";
   //boost::filesystem::path outputFile = _dstDir;
