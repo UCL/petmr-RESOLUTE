@@ -32,4 +32,4 @@ before_install:
   - cd ~/antsbin
 
 script:
-  - cmake -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j 2 && cd ANTS-build/ && make test
+  - cmake -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test
