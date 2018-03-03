@@ -25,11 +25,11 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
-  - git clone --branch v2.2.0 https://github.com/ANTsX/ANTs.git
+  - git clone --branch v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - pwd
   - ls
-  - mkdir antsbin
-  - cd antsbin
+  - mkdir ~/antsbin
+  - cd ~/antsbin
 
 script:
-  - cmake -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ./../ANTs && make -j 2 && cd ANTS-build/ && make test
+  - cmake -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j 2 && cd ANTS-build/ && make test
