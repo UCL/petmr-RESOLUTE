@@ -34,7 +34,7 @@ before_install:
   - cd glog
   - cmake -DCMAKE_INSTALL_PREFIX=/Users/travis/GLOG-INSTALL
   - make
-  - make install
+  - sudo make install
   - cd ..
   - git clone --branch v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - pwd
