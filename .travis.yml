@@ -37,7 +37,7 @@ before_install:
   - sudo make install
   - cd ..
   - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
-  - cd nlohmann
+  - cd json
   - cmake .
   - make
   - sudo make install
