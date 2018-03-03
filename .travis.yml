@@ -38,3 +38,4 @@ before_install:
 
 script:
   - cmake -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test
+  - mkdir -p ~/RESOLUTE && cd ~/RESOLUTE && cmake -DITK_DIR=/Users/travis/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=/Users/travis/antsbin/lib ../petmr-RESOLUTE && make -j2 
