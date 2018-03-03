@@ -1,7 +1,6 @@
-# use containers
-sudo: true
+language: generic
 
-language: cpp
+sudo: true
 
 cache: ccache
 
@@ -27,6 +26,7 @@ matrix:
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
 
 before_install:
+  - g++ --version
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
