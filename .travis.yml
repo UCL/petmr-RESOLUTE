@@ -27,6 +27,7 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - git clone --branch v2.2.0 https://github.com/ANTsX/ANTs.git
   - pwd
+  - ls
   - mkdir antsbin
   - cd antsbin
 
