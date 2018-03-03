@@ -56,6 +56,8 @@
 #include <itkRelabelComponentImageFilter.h>
 #include <itkBinaryFillholeImageFilter.h>
 #include <itkDiscreteGaussianImageFilter.h>
+#include <itkNumericTraits.h>
+#include <itkNeighborhoodIterator.h>
 
 #include "itkBinaryMorphologicalClosingImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
@@ -65,6 +67,8 @@
 #include "ANTsReg.hpp"
 #include <antsRegistrationTemplateHeader.h>
 #include <antsApplyTransforms.h>
+
+#include "EnvironmentInfo.h"
 
 
 
@@ -142,6 +146,7 @@ public:
   void SetMaskImage(const TMaskImage* mask);
 
   void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
+  void SetOutputFileExtension (const std::string s);
   void SetJSONParams(const nlohmann::json &j){ _jsonParams = j;};
 
   //mu-values (cm-1)
@@ -192,6 +197,8 @@ protected:
   boost::filesystem::path _dstDir;
 
   nlohmann::json _jsonParams;
+
+  std::string _fileExt = ".nii.gz";
 
   struct cluster_coord {
     unsigned int x,y;
@@ -271,6 +278,17 @@ typename TMaskImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::
 {
   return static_cast< const TMaskImage * >
          ( this->ProcessObject::GetInput(3) );
+}
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::SetOutputFileExtension(const std::string s)
+{
+  if (s[0] != '.') {
+    LOG(ERROR) << "Does not appear to be a valid extension!";
+    throw false;
+  }
+
+  _fileExt = s;
 }
 
 template< typename TInputImage, typename TMaskImage>
@@ -410,7 +428,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeAirMask(){
   typename WriterType::Pointer writer = WriterType::New();
 
   boost::filesystem::path outFileName = _dstDir;
-  outFileName /= "air.nii.gz";
+  outFileName /= "air" + _fileExt;
   writer->SetFileName(outFileName.string());
   writer->SetInput(_airMask);
 
@@ -492,7 +510,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakePatientVolumeMask(){
   typename WriterType::Pointer writer = WriterType::New();
 
   boost::filesystem::path outFileName = _dstDir;
-  outFileName /= "patient_vol.nii.gz";
+  outFileName /= "patient_vol" + _fileExt;
   writer->SetFileName(outFileName.string());
   writer->SetInput(connected->GetOutput());
 
@@ -548,18 +566,10 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
   maskFilter->SetOutsideValue( 0 ); 
   maskFilter->SetMaskImage( _patVolMask );
 
-  typedef itk::ImageFileWriter<TInputImage> WriterType;
-  typename WriterType::Pointer writer = WriterType::New();
-
-  boost::filesystem::path outFileName = _dstDir;
-  outFileName /= "R2s.nii.gz";
-  writer->SetFileName(outFileName.string());
-  writer->SetInput(maskFilter->GetOutput());
-
   try {
-    writer->Update();
+    maskFilter->Update();
   } catch (itk::ExceptionObject &ex){
-    LOG(ERROR) << "Could not write R2* image!";
+    LOG(ERROR) << "Could not calculate R2* image!";
     throw(ex);    
   }
   
@@ -569,8 +579,52 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
   duplicator->Update();
   _R2s = duplicator->GetOutput();
 
+  //Make any +inf voxels equal to average of neighbourhood (that are not infs).
+  itk::ImageRegionIterator<TInputImage> r2sIt(_R2s,_R2s->GetLargestPossibleRegion());
+  typedef itk::NeighborhoodIterator<TInputImage> NeighborhoodIteratorType;
 
+  //3x3x3 neighbourhood
+  typename NeighborhoodIteratorType::RadiusType radius;
+  for (unsigned int i = 0; i < TInputImage::ImageDimension; ++i) 
+    radius[i] = 1;
+  // Initializes the iterators on the input & output image regions
+  NeighborhoodIteratorType it(radius, _R2s, 
+                          _R2s->GetLargestPossibleRegion());
 
+  const typename TInputImage::PixelType maxPX = itk::NumericTraits< typename TInputImage::PixelType >::max();
+
+  const float R2S_THRESHOLD = 10000;
+
+  for (it.Begin(); ! it.IsAtEnd(); ++it, ++r2sIt )
+  {
+    float accum = 0.0;
+    int nV = 0;
+    if (r2sIt.Get() > R2S_THRESHOLD){
+      for (int i = 0; i < it.Size(); ++i){
+        if (it.GetPixel(i) <= R2S_THRESHOLD){
+          accum += it.GetPixel(i);
+          nV++;
+        }
+      }
+      r2sIt.Set(accum/nV);
+    }
+  }
+
+  typedef itk::ImageFileWriter<TInputImage> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+
+  boost::filesystem::path outFileName = _dstDir;
+  outFileName /= "R2s" + _fileExt;
+  writer->SetFileName(outFileName.string());
+  writer->SetInput(_R2s);
+
+  try {
+    writer->Update();
+  } catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << "Could not write R2* image!";
+    throw(ex);    
+  }
+  
 }
 
 template< typename TInputImage, typename TMaskImage>
@@ -611,10 +665,6 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::InvertMasks(
 
   boost::filesystem::path affTransform = _dstDir;
   affTransform /= "ANTs-Affine.txt";  
-
-  //boost::filesystem::path floatFileName = "/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_asym_09a_nifti/mni_icbm152_nlin_asym_09a/mastoid.nii.gz";
-  //boost::filesystem::path outputFile = _dstDir;
-  //outputFile /= "mastoid.nii.gz"; 
 
   std::stringstream ss;
 
@@ -864,7 +914,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
   typename WriterType::Pointer writer = WriterType::New();
 
   boost::filesystem::path outFileName = _dstDir;
-  outFileName /= "RESOLUTE.nii.gz";
+  outFileName /= "RESOLUTE" + _fileExt;
   writer->SetFileName(outFileName.string());
   writer->SetInput(outputImage);
 
@@ -887,7 +937,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
   blurFilter->Update();
 
   outFileName = _dstDir;
-  outFileName /= "sRESOLUTE.nii.gz";
+  outFileName /= "sRESOLUTE" + _fileExt;
   writer->SetFileName(outFileName.string());
   writer->SetInput(blurFilter->GetOutput());
 
@@ -903,7 +953,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
   blurFilter->Update();
 
   outFileName = _dstDir;
-  outFileName /= "sMRAC.nii.gz";
+  outFileName /= "sMRAC" + _fileExt;
   writer->SetFileName(outFileName.string());
   writer->SetInput(blurFilter->GetOutput());
 
@@ -1190,7 +1240,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::NormaliseUTE(){
   _sumUTE = duplicator->GetOutput();
 
   outFileName = _dstDir;
-  outFileName /= "snUTE-test.nii.gz";
+  outFileName /= "snUTE" + _fileExt;
   writer->SetFileName(outFileName.string());
   writer->SetInput(_sumUTE);
 
@@ -1288,10 +1338,6 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   LOG(INFO) << "RESOLUTE complete.";
 
   this->GraftOutput(_resolute);
-  //Scaling
-
-  //Output images
-
 
 }
 

@@ -40,7 +40,6 @@
 #include "EnvironmentInfo.h"
 #include "ParamSkeleton.hpp"
 #include "ExtractDicomImages.hpp"
-#include "ExtractMaskImages.hpp"
 #include "Resolute.hpp"
 
 namespace po = boost::program_options;
@@ -414,39 +413,11 @@ int main(int argc, char **argv)
 
   typedef dcm::ReadDicomSeries<ImageType> SeriesReadType;
 
-  //Read mu-map and both UTEs and write file.
-
-  /*
-  for (auto const& imgUID: srcSeriesUIDs) {
-    std::vector<fs::path> fNames = tree->GetSeriesFileList(imgUID);
-    std::unique_ptr<SeriesReadType> dcm(new SeriesReadType(fNames));
-
-    try {
-      dcm->Read();
-    } catch(bool){
-      LOG(ERROR) << "Could not read series: " << imgUID;
-      LOG(ERROR) << "Aborting!";
-      return EXIT_FAILURE;      
-    }
-
-    fs::path outFilePath = fs::canonical(destRoot);
-    outFilePath /= imgUID;
-    outFilePath += outputType;
-
-    try {
-      dcm->Write(outFilePath);
-    } catch(bool){
-      LOG(ERROR) << "Could not write series: " << imgUID << " to " << outFilePath;
-      LOG(ERROR) << "Aborting!";
-      return EXIT_FAILURE;      
-    }
-
-  }*/
-
   typedef ns::ResoluteImageFilter<ImageType,ImageType> ResoluteFilterType;
   ResoluteFilterType::Pointer resoluteFilter = ResoluteFilterType::New();
   resoluteFilter->SetJSONParams(paramFile);
   resoluteFilter->SetOutputDirectory(destRoot);
+  resoluteFilter->SetOutputFileExtension(outputType);
 
   std::vector<fs::path> fNames = tree->GetSeriesFileList(mumapUID);
   std::unique_ptr<SeriesReadType> dcm(new SeriesReadType(fNames));

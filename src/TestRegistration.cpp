@@ -29,7 +29,6 @@
 #include <nlohmann/json.hpp>
 
 #include "EnvironmentInfo.h"
-#include "ExtractMaskImages.hpp"
 
 #include "antsRegistrationTemplateHeader.h"
 #include <boost/algorithm/string/classification.hpp>
@@ -71,50 +70,7 @@ for (auto a : args){
   x++;
 }
 
-/*
-args.push_back("verbose 1");
-args.push_back("dimensionality 3");
-args.push_back("float 0");
-args.push_back("collapse-output-transforms 1");
-*/
-
 antsRegistration( args, &std::cout);
-
-
-  /*
-  //Define an input image type
-  typedef itk::Image<int,4> InputImageType;
-
-  //Define an output image type
-  typedef itk::Image<int,3> OutputImageType;
-
-  typedef ns::ExtractMaskImage<InputImageType,OutputImageType> MaskExtractorType;
-
-  fs::path inputFile = argv[1];
-  fs::path outputDir = argv[2];
-
-  std::unique_ptr<MaskExtractorType> extractor( new MaskExtractorType(inputFile) );
-
-  OutputImageType::Pointer frontal = OutputImageType::New();
-
-  //extractor->GetRegion(ns::RegionLocs::FRONTAL_SINUS, frontal);
-  //std::cout << frontal;
-
-  fs::path outPath = outputDir;
-  outPath /= "front-test.nii.gz";
-  extractor->WriteRegionToDisk(ns::RegionLocs::FRONTAL_SINUS, outPath);
-
-  outPath = outputDir;
-  outPath /= "skull-base-test.nii.gz";
-  extractor->WriteRegionToDisk(ns::RegionLocs::SKULL_BASE, outPath);
-
-  outPath = outputDir;
-  outPath /= "mastoid-test.nii.gz";
-  extractor->WriteRegionToDisk(ns::RegionLocs::MASTOID, outPath);
-
-  outPath = outputDir;
-  outPath /= "nasal-test.nii.gz";
-  extractor->WriteRegionToDisk(ns::RegionLocs::NASAL, outPath);*/
 
   return EXIT_SUCCESS;
 }
