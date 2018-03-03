@@ -30,6 +30,11 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
+  - git clone --branch=v0.3.5 https://github.com/google/glog
+  - cd glog
+  - ./configure
+  - make
+  - cd ..
   - git clone --branch v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - pwd
   - ls
@@ -38,4 +43,4 @@ before_install:
 
 script:
   - cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test
-  - cd /Users/travis/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DITK_DIR=/Users/travis/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=/Users/travis/antsbin/lib && make -j2 
+  - cd /Users/travis/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DITK_DIR=/Users/travis/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=/Users/travis/antsbin/lib -DGLOG_ROOT_DIR=../glog && make -j2
