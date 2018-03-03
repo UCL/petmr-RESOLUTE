@@ -68,7 +68,6 @@ namespace ns {
 
         {"regName", p.regName},
         {"regTemplatePath", p.regTemplatePath.string()},
-        {"regMaskPath", p.regMaskPath.string()},
         {"regArgs", p.regArgs}
     };
   }
@@ -89,7 +88,6 @@ namespace ns {
 
     p.regName = j.at("regName").get<std::string>();
     p.regTemplatePath = j.at("regTemplatePath").get<std::string>();
-    p.regMaskPath = j.at("regMaskPath").get<std::string>();
     p.regArgs = j.at("regArgs").get<std::string>();
 
   }
@@ -109,7 +107,6 @@ namespace ns {
     "2.46",
 
     "ANTS",
-    "",
     "",
     "3 -m CC[<%%REF%%>,<%%FLOAT%%>,1,4] -i 10x5x2 -o <%%PREFIX%%> -t SyN[0.5] -r Gauss[3,0] -G"
     //"--verbose 0 --dimensionality 3 --float 1 --collapse-output-transforms 1 --output [<%%PREFIX%%>,<%%WARPEDIMG%%>,<%%INVWARPEDIMG%%>] --interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] --initial-moving-transform [<%%REF%%>,<%%FLOAT%%>,1] --transform Affine[0.1] --metric MI[<%%REF%%>,<%%FLOAT%%>,1,32,Regular,0.25] --convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --transform SyN[0.5,3,0] --metric CC[<%%REF%%>,<%%FLOAT%%>,1,4] --convergence [10x5x2,1e-6,10] --shrink-factors 4x2x1 --smoothing-sigmas 2x1x0mm",
@@ -158,6 +155,7 @@ bool ValidateJSON(const nlohmann::json j){
     throw false;
   }
 
+  /*
   //Check if registration mask exists
   if (!boost::filesystem::exists(pr.regMaskPath)){
     LOG(ERROR) << "Registration mask " << pr.regMaskPath << " does not exist!";
@@ -168,7 +166,7 @@ bool ValidateJSON(const nlohmann::json j){
   if (!boost::filesystem::is_regular_file(pr.regMaskPath)){
     LOG(ERROR) << "Registration mask " << pr.regMaskPath << " does not appear to be a file!";
     throw false;
-  }
+  }*/
 
   return true;
 }

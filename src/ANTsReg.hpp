@@ -124,7 +124,6 @@ typename TImage::ConstPointer ANTsReg<TImage>::GetOutputImage(){
   }
   catch (itk::ExceptionObject &ex)
   {
-    //std::cout << ex << std::endl;
     LOG(ERROR) << ex;
     LOG(ERROR) << "Unable to read image " << tImagePath;
     throw false;
@@ -150,7 +149,6 @@ typename TImage::ConstPointer ANTsReg<TImage>::GetOutputInverseImage(){
   }
   catch (itk::ExceptionObject &ex)
   {
-    //std::cout << ex << std::endl;
     LOG(ERROR) << ex;
     LOG(ERROR) << "Unable to read image " << iImagePath;
     throw false;
@@ -231,7 +229,7 @@ void ANTsReg<TImage>::InsertParam(const std::string &key, const std::string &inf
   if (n == std::string::npos){
     LOG(WARNING) << "Replacement key: " << target << " not found!";
   }
-  //_argList.replace(n,target.length(),info);
+
   boost::replace_all(_argList, target, info);
 }
 
@@ -250,13 +248,10 @@ void ANTsReg<TImage>::Update(){
   InsertParam("FLOAT", _floatFileName.string());
   InsertParam("REF", _refFileName.string());
   InsertParam("PREFIX", fullPrefix.string());
-  InsertParam("WARPEDIMG", tImagePath.string());
-  InsertParam("INVWARPEDIMG", iImagePath.string());
+  //InsertParam("WARPEDIMG", tImagePath.string());
+  //InsertParam("INVWARPEDIMG", iImagePath.string());
 
   std::vector<std::string> args;
-
-//const boost::regex ex("--");
-//boost::split(args, argList, ex, boost::token_compress_on);
 
   boost::split_regex( args, _argList, boost::regex( " " ) ) ;
 

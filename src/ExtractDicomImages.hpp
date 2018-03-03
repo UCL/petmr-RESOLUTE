@@ -168,8 +168,6 @@ void StudyTree::PopulateLists(){
       if (boost::filesystem::is_regular_file(entry.status()))
       {
         //DLOG(INFO) << "Reading " << entry.path();
-        //if (inm::IsDICOM(entry.path()))
-        //  fileList.push_back(entry.path());
         if (GetDicomInfo(entry.path(), ds)) {
           AddStudyRecord(ds);
           AddSeriesRecord(ds);
@@ -196,7 +194,6 @@ void StudyTree::PopulateLists(){
   for (auto s : _seriesList){
     DLOG(INFO) << "Series List: " << std::endl << s.dump(4);
   }
-  //LOG(INFO) << _studyList.size() << " studies found";
 
 }
 
@@ -450,7 +447,7 @@ std::string UTETree::FindUTEUID(const std::string studyUID, const std::string ta
     std::string desc = seriesRec["SeriesDesc"];
     if (desc.find(tag) != std::string::npos){
 
-      //IF series has TE
+      //If series has TE
       if (CheckSeriesTE(s,TE)) {
         LOG(INFO) << "Identified UTE series (TE = " << TE << "): " << seriesRec["SeriesUID"];
         return seriesRec["SeriesUID"];

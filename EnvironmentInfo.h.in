@@ -1,2 +1,9 @@
+#pragma once
+
+#ifndef _ENVIRONMENTINFO_H_
+#define _ENVIRONMENTINFO_H_
+
 const char * const VERSION_NO = "@PACKAGE_VERSION@";
 const char * const BUILDER_NAME = "@BUILDER_NAME@";
+
+#endif
