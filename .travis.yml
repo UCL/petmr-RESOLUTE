@@ -9,9 +9,14 @@ language: cpp
 
 cache: ccache
 
-compiler:
-  - clang
-  - gcc
+matrix:
+  include:
+  - os: osx
+    compiler: clang
+  - os: osx
+    compiler: gcc
+  - os: linux
+    compiler: gcc
 
 addons:
   apt:
