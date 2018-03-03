@@ -68,7 +68,7 @@
 #include <antsRegistrationTemplateHeader.h>
 #include <antsApplyTransforms.h>
 
-#include "EnvironmentInfo.h"
+//#include "EnvironmentInfo.h"
 
 
 
