@@ -35,16 +35,24 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
-  - git clone --branch=v0.3.5 https://github.com/google/glog
+  - |
+    if [ ! -e glog ]; then
+        git clone --branch=v0.3.5 https://github.com/google/glog
+        cd glog
+        cmake  -DCMAKE_BUILD_TYPE=Release .
+        make -j2
+    fi
   - cd glog
-  - cmake  -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
   - sudo make install
   - cd ..
-  - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
+  - |
+    if [ ! -e json ]; then
+        git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
+        cd json
+        cmake  -DCMAKE_BUILD_TYPE=Release .
+        make -j2
+    fi
   - cd json
-  - cmake  -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
   - sudo make install
   - cd ..
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
