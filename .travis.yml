@@ -8,6 +8,9 @@ cache:
     apt: true
     directories:
         - $HOME/antsbin
+        - $HOME/ANTs
+        - $HOME/glog
+        - $HOME/json
 
 addons:
   apt:
@@ -36,26 +39,27 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - |
-    if [ ! -e glog ]; then
+    if [ ! -e ~/glog ]; then
+        cd ~
         git clone --branch=v0.3.5 https://github.com/google/glog
         cd glog
         cmake  -DCMAKE_BUILD_TYPE=Release .
         make -j2
     fi
-  - cd glog
+  - cd ~/glog
   - sudo make install
-  - cd ..
   - |
-    if [ ! -e json ]; then
+    if [ ! -e ~/json ]; then
+        cd ~
         git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
         cd json
         cmake  -DCMAKE_BUILD_TYPE=Release .
         make -j2
     fi
-  - cd json
+  - cd ~/json
   - sudo make install
-  - cd ..
-  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
+  - cd ~
+  - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs; fi
   - |
     if [ ! -e ~/antsbin ]; then
         mkdir ~/antsbin;
