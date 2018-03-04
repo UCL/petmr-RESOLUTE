@@ -62,7 +62,7 @@ before_install:
         cd ~/antsbin;
         cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test;
     fi
-  - cd ~/build/UCL/petmr-RESOLUTE
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Release -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j2
+  - cd ~/build/UCL/petmr-RESOLUTE
+  - cmake -DCMAKE_BUILD_TYPE=Release -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib . && make -j2
