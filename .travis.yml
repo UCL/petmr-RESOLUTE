@@ -48,7 +48,7 @@ before_install:
   - sudo make install
   - cd ..
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
-  -|
+  - |
     if [ ! -e ~/antsbin ]; then
         mkdir ~/antsbin;
         cd ~/antsbin;
