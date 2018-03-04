@@ -1,27 +1,20 @@
-language: generic
+language: cpp
+dist: trusty
 
-sudo: true
+sudo: false
 
 cache: ccache
-
-cache:
-    apt: true
-    directories:
-        - $HOME/antsbin
-        - $HOME/ANTs
-        - $HOME/glog
-        - $HOME/json
 
 addons:
   apt:
     sources:
-      - george-edison55-precise-backports
-      - llvm-toolchain-precise-3.8
       - ubuntu-toolchain-r-test
     packages:
       - cmake
       - cmake-data
+      - build-essential
       - g++-5
+      - ccache
       - libboost-all-dev
 
 matrix:
@@ -43,28 +36,28 @@ before_install:
         cd ~
         git clone --branch=v0.3.5 https://github.com/google/glog
         cd glog
-        cmake  -DCMAKE_BUILD_TYPE=Release .
+        cmake  -DCMAKE_BUILD_TYPE=Release . -DCMAKE_INSTALL_PREFIX=./INSTALL
         make -j2
+        make install
     fi
-  - cd ~/glog && sudo make install
   - |
     if [ ! -e ~/json ]; then
         cd ~
         git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
         cd json
-        cmake  -DCMAKE_BUILD_TYPE=Release .
+        cmake  -DCMAKE_BUILD_TYPE=Release . -DCMAKE_INSTALL_PREFIX=./INSTALL
         make -j2
+        make install
     fi
-  - cd ~/json && sudo make install
   - cd ~
   - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs; fi
   - |
     if [ ! -e ~/antsbin ]; then
         mkdir ~/antsbin;
-        cd ~/antsbin;
-        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test;
     fi
 
 script:
+  - cd ~/antsbin
+  - cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test;
   - cd ~/build/UCL/petmr-RESOLUTE
   - cmake -DCMAKE_BUILD_TYPE=Release -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib . && make -j2
