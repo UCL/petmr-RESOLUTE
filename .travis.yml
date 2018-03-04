@@ -28,7 +28,7 @@ matrix:
     compiler: gcc
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
 
-before_install:
+before_script:
   - g++ --version
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
