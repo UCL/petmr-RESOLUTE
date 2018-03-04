@@ -51,7 +51,7 @@ before_install:
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - pwd
   - ls
-  - mkdir ~/antsbin
+  - if [ ! -e ~/antsbin ]; then mkdir ~/antsbin; fi
   - cd ~/antsbin
 
 script:
