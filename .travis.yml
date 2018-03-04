@@ -13,7 +13,7 @@ addons:
     packages:
       - cmake
       - cmake-data
-      - build-essentials
+      - build-essential
       - g++-5
       - libboost-all-dev
 
