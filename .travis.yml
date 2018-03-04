@@ -36,8 +36,8 @@ before_install:
         cd ~
         git clone --branch=v0.3.5 https://github.com/google/glog
         cd glog
-        cmake  -DCMAKE_BUILD_TYPE=Release . -DCMAKE_INSTALL_PREFIX=./INSTALL
-        make -j2
+        sudo cmake  -DCMAKE_BUILD_TYPE=Release . -DCMAKE_INSTALL_PREFIX=./INSTALL
+        sudo make -j2
         sudo make install
     fi
   - |
@@ -45,8 +45,8 @@ before_install:
         cd ~
         git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
         cd json
-        cmake  -DCMAKE_BUILD_TYPE=Release . -DCMAKE_INSTALL_PREFIX=./INSTALL
-        make -j2
+        sudo cmake  -DCMAKE_BUILD_TYPE=Release . -DCMAKE_INSTALL_PREFIX=./INSTALL
+        sudo make -j2
         sudo make install
     fi
   - cd ~
