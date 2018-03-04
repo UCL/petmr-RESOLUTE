@@ -46,12 +46,12 @@ before_install:
   - sudo make install
   - cd ..
   - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs; fi
+
+script:
   - |
     if [ ! -e ~/antsbin ]; then
         mkdir ~/antsbin;
         cd ~/antsbin;
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_ALL_ANTS_APPS=OFF -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF ~/ANTs && make -j2 --keep-going && cd ANTS-build/
     fi
-
-script:
   - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j2
