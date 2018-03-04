@@ -46,8 +46,7 @@ before_install:
         cmake  -DCMAKE_BUILD_TYPE=Release .
         make -j2
     fi
-  - cd ~/glog
-  - sudo make install
+  - cd ~/glog && sudo make install
   - |
     if [ ! -e ~/json ]; then
         cd ~
@@ -56,8 +55,7 @@ before_install:
         cmake  -DCMAKE_BUILD_TYPE=Release .
         make -j2
     fi
-  - cd ~/json
-  - sudo make install
+  - cd ~/json && sudo make install
   - cd ~
   - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs; fi
   - |
