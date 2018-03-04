@@ -1,19 +1,23 @@
-dist: trusty
-
-language: cpp
+language: generic
 
 sudo: true
 
 cache: ccache
 
+cache:
+    apt: true
+    directories:
+        - $HOME/antsbin
+
 addons:
   apt:
     sources:
+      - george-edison55-precise-backports
+      - llvm-toolchain-precise-3.8
       - ubuntu-toolchain-r-test
     packages:
       - cmake
       - cmake-data
-      - build-essential
       - g++-5
       - libboost-all-dev
 
