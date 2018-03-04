@@ -1,4 +1,6 @@
-language: generic
+dist: trusty
+
+language: cpp
 
 sudo: true
 
@@ -7,12 +9,11 @@ cache: ccache
 addons:
   apt:
     sources:
-      - george-edison55-precise-backports
-      - llvm-toolchain-precise-3.8
       - ubuntu-toolchain-r-test
     packages:
       - cmake
       - cmake-data
+      - build-essentials
       - g++-5
       - libboost-all-dev
 
