@@ -50,7 +50,7 @@ before_install:
     if [ ! -e ~/antsbin ]; then
         mkdir ~/antsbin;
         cd ~/antsbin;
-        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=ON ~/ANTs && make -j2 --keep-going && cd ANTS-build/ && make test
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_ALL_ANTS_APPS=OFF -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF ~/ANTs && make -j2 --keep-going && cd ANTS-build/
     fi
 
 script:
