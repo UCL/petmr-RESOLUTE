@@ -68,7 +68,7 @@
 #include <antsRegistrationTemplateHeader.h>
 #include <antsApplyTransforms.h>
 
-#include "EnvironmentInfo.h"
+//#include "EnvironmentInfo.h"
 
 
 
@@ -256,28 +256,28 @@ template< typename TInputImage, typename TMaskImage>
 typename TInputImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::GetMRACImage()
 {
   return static_cast< const TInputImage * >
-         ( this->ProcessObject::GetInput(0) );
+         ( this->GetInput(0) );
 }
 
 template< typename TInputImage, typename TMaskImage>
 typename TInputImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::GetUTEImage1()
 {
   return static_cast< const TInputImage * >
-         ( this->ProcessObject::GetInput(1) );
+         ( this->GetInput(1) );
 }
 
 template< typename TInputImage, typename TMaskImage>
 typename TInputImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::GetUTEImage2()
 {
   return static_cast< const TInputImage * >
-         ( this->ProcessObject::GetInput(2) );
+         ( this->GetInput(2) );
 }
 
 template< typename TInputImage, typename TMaskImage>
 typename TMaskImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::GetMaskImage()
 {
   return static_cast< const TMaskImage * >
-         ( this->ProcessObject::GetInput(3) );
+         ( this->GetInput(3) );
 }
 
 template< typename TInputImage, typename TMaskImage>
