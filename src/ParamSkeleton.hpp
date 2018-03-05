@@ -46,7 +46,6 @@ namespace ns {
 
     std::string regName;
     boost::filesystem::path regTemplatePath;
-    boost::filesystem::path regMaskPath;
     std::string regArgs;
   };
 
@@ -103,7 +102,7 @@ namespace ns {
     "Head_MRAC_PET_UTE_UMAP",
     "Head_MRAC_PET_UTE",
     "0.07",
-    "Head_MRAC_PET_UTE_UMAP",
+    "Head_MRAC_PET_UTE",
     "2.46",
 
     "ANTS",
