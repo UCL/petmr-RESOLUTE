@@ -2,7 +2,10 @@
 
 [![Build Status](https://travis-ci.com/UCL/petmr-RESOLUTE.svg?token=2LGssZ2qj5A4K3LNd3es&branch=master)](https://travis-ci.com/UCL/petmr-RESOLUTE)
 
-Implementation of RESOLUTE pseudo-CT method for the mMR.
+Implementation of the RESOLUTE pseudo-CT (pCT) method for the Siemens mMR.
+
+If you use the RESOLUTE pCT approach in your work, please cite the following paper:
+- <i>Region specific optimization of continuous linear attenuation coefficients based  on UTE (RESOLUTE): application to PET/MR brain imaging</i>. Ladefoged, C. N., Benoit, D., Law, I., Holm, S., Kjaer, A., Hojgaard, L., … Andersen, F. L. (2015). Physics in Medicine and Biology, 60(20), 8047–8065. [DOI](https://doi.org/10.1088/0031-9155/60/20/8047)
 
 ## Required packages
 - [ANTs](https://github.com/ANTsX/ANTs)
