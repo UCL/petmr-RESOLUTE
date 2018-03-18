@@ -13,6 +13,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(${PACKAGE_NAME} VERSION ${PACKAGE_VERSION})
 
+option(BUILD_TESTING "" OFF)
+include(CTest)
+
 make_directory(${PROJECT_BINARY_DIR}/config)
 
 set(BUILDER_NAME ${CURRENT_USER})
@@ -28,4 +31,9 @@ include(resolute-deps)
 
 include_directories("${PROJECT_BINARY_DIR}/config")
 #include_directories(lib)
+include_directories(src)
 add_subdirectory(src)
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
