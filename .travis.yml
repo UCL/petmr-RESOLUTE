@@ -17,6 +17,7 @@ addons:
       - cmake-data
       - g++-5
       - libboost-all-dev
+      - libgtest-dev
 
 matrix:
   include:
