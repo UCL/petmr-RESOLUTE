@@ -18,6 +18,7 @@ addons:
       - g++-5
       - libboost-all-dev
       - libgtest-dev
+      - ccache
 
 matrix:
   include:
