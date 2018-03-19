@@ -31,6 +31,8 @@
 #include "EnvironmentInfo.h"
 
 #include "antsRegistrationTemplateHeader.h"
+#include <include/ants.h>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/regex.hpp>
@@ -42,20 +44,7 @@ using namespace ants;
 int main(int argc, char **argv)
 {
 
-std::string argList = "--verbose 1 --dimensionality 3 \
---float 0 --collapse-output-transforms 1 \
---output [reg-out/fullSyN,reg-out/fullSyNWarped.nii.gz,reg-out/fullSyNInverseWarped.nii.gz] \
---interpolation Linear --use-histogram-matching 0 --winsorize-image-intensities [0.005,0.995] \
---initial-moving-transform [/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1] \
---transform Rigid[0.1] \
---metric MI[/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1,32,Regular,0.25] \
---convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox \
---transform Affine[0.1] \
---metric MI[/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1,32,Regular,0.25] \
---convergence [1000x500x250x100,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox \
---transform BSplineSyN[0.1,26,0,3] \
---metric CC[/Users/bathomas/Documents/ATLASES/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii,/Users/bathomas/Documents/BUILDS/PETMR-RESOLUTE/ute2-test.nii.gz,1,4] \
---convergence [10x7x5x5,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox";
+std::string argList = "3 -m CC[<%%REF%%>,<%%FLOAT%%>,1,4] -i 10x5x2 -o <%%PREFIX%%> -t SyN[0.5] -r Gauss[3,0] -G";
 
 std::vector<std::string> args;
 
@@ -70,7 +59,7 @@ for (auto a : args){
   x++;
 }
 
-antsRegistration( args, &std::cout);
+ants::ANTS( args, &std::cout);
 
   return EXIT_SUCCESS;
 }
