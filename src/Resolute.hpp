@@ -68,6 +68,7 @@
 #include <antsRegistrationTemplateHeader.h>
 #include <antsApplyTransforms.h>
 
+#include "TemplateController.hpp"
 //#include "EnvironmentInfo.h"
 
 
@@ -147,7 +148,7 @@ public:
 
   void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
   void SetOutputFileExtension (const std::string s);
-  void SetJSONParams(const nlohmann::json &j){ _jsonParams = j;};
+  void SetJSONParams(const nlohmann::json &j);
 
   //mu-values (cm-1)
   const float BRAIN_MU = 0.099;
@@ -208,6 +209,8 @@ protected:
 
   //typename ResoluteImageFilter::CoordListVector _coords;
   cluster_coord _coords;
+
+  typename tc::TemplateController _templateImageController;
 
   void CalculateHistogram();
   void GetKMeansMask(const HistoImageType::Pointer &h, HistoImageType::Pointer &outputImage);
@@ -290,6 +293,21 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::SetOutputFileExtension(const 
 
   _fileExt = s;
 }
+
+template< typename TInputImage, typename TMaskImage>
+void ResoluteImageFilter<TInputImage, TMaskImage>::SetJSONParams(const nlohmann::json &j)
+{ 
+  _jsonParams = j; 
+
+  try {
+    _templateImageController.SetPath(_jsonParams["regTemplatePath"].template get<std::string>());
+  } catch (...){
+    LOG(ERROR) << "Failed to set path to template manifest!";
+    throw false;
+  }
+
+};
+
 
 template< typename TInputImage, typename TMaskImage>
 void ResoluteImageFilter<TInputImage, TMaskImage>::CalculateHistogram()
@@ -637,7 +655,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::PerformRegistration(){
     ANTsRegistration->SetParams(_jsonParams["regArgs"]);
     ANTsRegistration->SetOutputDirectory( _dstDir );
     ANTsRegistration->SetOutputPrefix("ANTs-");
-    ANTsRegistration->SetReferenceFileName(_jsonParams["regTemplatePath"].template get<std::string>());
+    ANTsRegistration->SetReferenceFileName(_templateImageController.GetFilePath(tc::ETemplateImages::T1));
 
     boost::filesystem::path floatFileName = _dstDir;
     floatFileName /= "ute2.nii.gz";
@@ -717,19 +735,19 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
 
   boost::filesystem::path imgPath = _dstDir;
   //Load GM
-  imgPath /= "gm.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::GM);
   typename TInputImage::Pointer gm = TInputImage::New();
   LoadImageFromFile(imgPath, gm);
 
   //Load WM
   imgPath = _dstDir;
-  imgPath /= "wm.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::WM);
   typename TInputImage::Pointer wm = TInputImage::New();
   LoadImageFromFile(imgPath, wm);
 
   //Load CSF
   imgPath = _dstDir;
-  imgPath /= "csf.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::CSF);
   typename TInputImage::Pointer csf = TInputImage::New();
   LoadImageFromFile(imgPath, csf);
 
@@ -795,31 +813,31 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
 
   //Load brain_mask
   imgPath = _dstDir;
-  imgPath /= "brain_mask.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::Brain);
   typename TInputImage::Pointer brain_mask = TInputImage::New();
   LoadImageFromFile(imgPath, brain_mask);
 
   //Load frontal sinus
   imgPath = _dstDir;
-  imgPath /= "frontal_sinus.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::Frontal);
   typename TInputImage::Pointer frontal = TInputImage::New();
   LoadImageFromFile(imgPath, frontal);
 
   //Load skull base
   imgPath = _dstDir;
-  imgPath /= "skull_base.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::Skull);
   typename TInputImage::Pointer skull_base = TInputImage::New();
   LoadImageFromFile(imgPath, skull_base);
 
   //Load mastoid
   imgPath = _dstDir;
-  imgPath /= "mastoid.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::Mastoid);
   typename TInputImage::Pointer mastoid = TInputImage::New();
   LoadImageFromFile(imgPath, mastoid);
 
   //Load nasal
   imgPath = _dstDir;
-  imgPath /= "nasal.nii.gz";
+  imgPath /= _templateImageController.GetFileName(tc::ETemplateImages::Nasal);
   typename TInputImage::Pointer nasal = TInputImage::New();
   LoadImageFromFile(imgPath, nasal);
 
@@ -1295,19 +1313,19 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
 
   LOG(INFO) << "Inverting masks";
 
-  boost::filesystem::path mni = _jsonParams["regTemplatePath"].template get<std::string>();
-  mni = mni.parent_path();
+  boost::filesystem::path t1TemplateDir = _templateImageController.GetFilePath(tc::ETemplateImages::T1);
+  t1TemplateDir = t1TemplateDir.parent_path();
 
   std::vector<std::string> masks = {
-    "mastoid.nii.gz", 
-    "frontal_sinus.nii.gz",
-    "nasal.nii.gz",
-    "skull_base.nii.gz",
-    "brain_mask.nii.gz"
+    _templateImageController.GetFileName(tc::ETemplateImages::Mastoid), 
+    _templateImageController.GetFileName(tc::ETemplateImages::Frontal),
+    _templateImageController.GetFileName(tc::ETemplateImages::Nasal),
+    _templateImageController.GetFileName(tc::ETemplateImages::Skull),
+    _templateImageController.GetFileName(tc::ETemplateImages::Brain),
   };
 
   for (auto m : masks){
-    boost::filesystem::path srcPath = mni;
+    boost::filesystem::path srcPath = t1TemplateDir;
     srcPath /= m;
 
     boost::filesystem::path dstPath = _dstDir;
@@ -1316,13 +1334,13 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::GenerateData()
   }
 
   std::vector<std::string> tissues = {
-    "gm.nii.gz",
-    "wm.nii.gz",
-    "csf.nii.gz",
+    _templateImageController.GetFileName(tc::ETemplateImages::GM),
+    _templateImageController.GetFileName(tc::ETemplateImages::WM),
+    _templateImageController.GetFileName(tc::ETemplateImages::CSF),
   }; 
 
   for (auto t : tissues){
-    boost::filesystem::path srcPath = mni;
+    boost::filesystem::path srcPath = t1TemplateDir;
     srcPath /= t;
 
     boost::filesystem::path dstPath = _dstDir;
