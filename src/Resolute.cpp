@@ -415,7 +415,15 @@ int main(int argc, char **argv)
 
   typedef ns::ResoluteImageFilter<ImageType,ImageType> ResoluteFilterType;
   ResoluteFilterType::Pointer resoluteFilter = ResoluteFilterType::New();
-  resoluteFilter->SetJSONParams(paramFile);
+
+  try {
+    resoluteFilter->SetJSONParams(paramFile);
+  } catch (...){
+    LOG(ERROR) << "Failed to set path to template manifest!";
+    LOG(ERROR) << "Aborting!";
+    return EXIT_FAILURE;   
+  }
+
   resoluteFilter->SetOutputDirectory(destRoot);
   resoluteFilter->SetOutputFileExtension(outputType);
 
