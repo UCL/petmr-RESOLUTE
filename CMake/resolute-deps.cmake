@@ -18,6 +18,10 @@ include(${ITK_USE_FILE})
 
 find_package(glog REQUIRED)
 
+if(BUILD_TESTING)
+  find_package(GTest REQUIRED)
+endif()
+
 find_package(nlohmann_json)
 
 #ANTS

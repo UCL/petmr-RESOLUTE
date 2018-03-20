@@ -11,14 +11,3 @@ target_link_libraries(resolute
     )
 
 install(TARGETS resolute DESTINATION bin)
-
-add_executable(test_reg TestRegistration.cpp ${ANTs_SOURCE_DIR}/Examples/antsRegistration.cxx )
-target_link_libraries(test_reg 
-      ${ITK_LIBRARIES}  
-      ${Boost_LIBRARIES}
-      ${ANTS_LIBS}
-      glog 
-      nlohmann_json
-    )
-
-install(TARGETS test_reg DESTINATION bin)
