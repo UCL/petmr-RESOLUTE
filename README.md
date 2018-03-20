@@ -45,7 +45,7 @@ The skeleton will look like this:
     "version": "0.0.1"
 }
 ```
-Fill in the desired output directory in the variable `destDir`, and the path to the registration template in `regTemplatePath`, e.g.
+Fill in the desired output directory in the variable `destDir`, and the path to the registration template `manifest.yaml` in `regTemplatePath`, e.g.
 ```yaml
 {
     "MRACSeriesName": "Head_MRAC_PET_UTE_UMAP",
@@ -58,7 +58,7 @@ Fill in the desired output directory in the variable `destDir`, and the path to 
     "destFileType": ".nii.gz",
     "logDir": "./logs",
     "regName": "ANTS",
-    "regTemplatePath": "/path/to/template/mni_icbm152_t1_tal_nlin_sym_09a.nii.gz",
+    "regTemplatePath": "/path/to/template/manifest.yaml",
     "regArgs": "3 -m CC[<%%REF%%>,<%%FLOAT%%>,1,4] -i 10x5x2 -o <%%PREFIX%%> -t SyN[0.5] -r Gauss[3,0] -G",
     "version": "0.0.1"
 }
