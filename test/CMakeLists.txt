@@ -26,6 +26,8 @@ target_link_libraries(testRESOLUTE
   ${ANTS_LIBS}
   gtest
   gmock
+  glog 
+  nlohmann_json
 )
 
 install(TARGETS testRESOLUTE DESTINATION bin)
