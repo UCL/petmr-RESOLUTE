@@ -1,4 +1,4 @@
-# petmr-RESOLUTE 
+# petmr-RESOLUTE
 
 [![Build Status](https://travis-ci.com/UCL/petmr-RESOLUTE.svg?token=2LGssZ2qj5A4K3LNd3es&branch=master)](https://travis-ci.com/UCL/petmr-RESOLUTE)
 
@@ -10,9 +10,15 @@ If you use the RESOLUTE pCT approach in your work, please cite the following pap
 ## Required packages
 - [ANTs](https://github.com/ANTsX/ANTs)
 - [ITK](https://itk.org/) (Note. this can be built when compiling ANTs)
-- [Boost](http://www.boost.org/) 
+- [Boost](http://www.boost.org/)
 - [glog](https://github.com/google/glog)
 - [DCMTK](http://dicom.offis.de/). The application `dcmodify` must be available on your path.
+
+## Template and mask images
+The images that are required to run this application are available on Zenodo:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1204197.svg)](https://doi.org/10.5281/zenodo.1204197)
+
+Please extract the zip and amend the JSON file as described below.
 
 ## Basic usage
 ```shell
@@ -26,7 +32,7 @@ A skeleton JSON file can be created with the command:
 ```
 ./resolute --create-json <MYJSONFILE>
 ```
-where ```<MYJSONFILE>``` is an output filename. 
+where ```<MYJSONFILE>``` is an output filename.
 The skeleton will look like this:
 ```yaml
 {
