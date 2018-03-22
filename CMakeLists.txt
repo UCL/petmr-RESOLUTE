@@ -1,5 +1,7 @@
 cmake_minimum_required( VERSION 3.7.0 FATAL_ERROR)
 
+set(CMAKE_CXX_STANDARD 11)
+
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
 # Set package information
@@ -24,8 +26,6 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/EnvironmentInfo.h.in"
   "${PROJECT_BINARY_DIR}/config/EnvironmentInfo.h"
 )
-
-set(CMAKE_CXX_STANDARD 11)
 
 include(resolute-deps)
 
