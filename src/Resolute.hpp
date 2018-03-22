@@ -601,6 +601,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
   itk::ImageRegionIterator<TInputImage> r2sIt(_R2s,_R2s->GetLargestPossibleRegion());
   typedef itk::NeighborhoodIterator<TInputImage> NeighborhoodIteratorType;
 
+  itk::ImageRegionIterator<TInputImage> ute2It(_normUTE2,_normUTE2->GetLargestPossibleRegion());
+
+
   //3x3x3 neighbourhood
   typename NeighborhoodIteratorType::RadiusType radius;
   for (unsigned int i = 0; i < TInputImage::ImageDimension; ++i) 
@@ -613,18 +616,23 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
 
   const float R2S_THRESHOLD = 10000;
 
-  for (it.Begin(); ! it.IsAtEnd(); ++it, ++r2sIt )
+  for (it.Begin(); ! it.IsAtEnd(); ++it, ++r2sIt, ++ute2It )
   {
     float accum = 0.0;
     int nV = 0;
-    if (r2sIt.Get() > R2S_THRESHOLD){
-      for (int i = 0; i < it.Size(); ++i){
-        if (it.GetPixel(i) <= R2S_THRESHOLD){
-          accum += it.GetPixel(i);
-          nV++;
+
+    if (ute2It.Get() > 1200 )
+      r2sIt.Set(0);
+    else {
+      if (r2sIt.Get() > R2S_THRESHOLD){
+        for (int i = 1; i < it.Size(); ++i){
+          if (it.GetPixel(i) <= R2S_THRESHOLD){
+            accum += it.GetPixel(i);
+            nV++;
+          }
         }
+        r2sIt.Set(accum/nV);
       }
-      r2sIt.Set(accum/nV);
     }
   }
 
