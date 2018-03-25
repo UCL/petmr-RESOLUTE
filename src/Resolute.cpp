@@ -409,8 +409,6 @@ int main(int argc, char **argv)
 
   std::string outputType = paramFile["destFileType"];
 
-  std::vector<std::string> srcSeriesUIDs = {mumapUID, ute1UID, ute2UID};
-
   typedef dcm::ReadDicomSeries<ImageType> SeriesReadType;
 
   typedef ns::ResoluteImageFilter<ImageType,ImageType> ResoluteFilterType;
