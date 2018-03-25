@@ -55,7 +55,7 @@ before_script:
     fi
   - cd ~/googletest-build
   - sudo make install #step 1 to here
-  - if [ ! -e /usr/local/include/nlohmann ]; then git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
+  - if [ ! -e ~json/include/nlohmann ]; then git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
   - cd ~/json/include
   - sudo ln -s nlohmann /usr/local/include #step 2 to here
   #- cd ~
