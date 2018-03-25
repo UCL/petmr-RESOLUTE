@@ -33,6 +33,7 @@ matrix:
 
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
+  - conda install -c conda-forge itk
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
@@ -61,6 +62,6 @@ script:
     if [ ! -e ~/antsbin/ANTs-build ]; then
         if [ ! -e ~/antsbin ]; then mkdir ~/antsbin; fi
         cd ~/antsbin;
-        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF ~/ANTs && make -j4 --keep-going
+        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF -DUSE_SYSTEM_ITK=ON ~/ANTs && make -j4 --keep-going
     fi
   - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j4 && ctest --verbose
