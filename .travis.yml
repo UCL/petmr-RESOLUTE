@@ -52,19 +52,19 @@ before_script:
         cmake -DCMAKE_BUILD_TYPE=Release ~/googletest &&
         make -j4;
     fi
-  - cd ~/googletest-build
-  - sudo make install
-  - if [ ! -e ~/json ]; then git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
-  - cd ~/json/include
-  - sudo ln -s nlohmann /usr/local/include
-  - cd ~
-  - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ; fi
-  - if [ ! -e ~/ITK ]; then git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git; fi
-  - if [ ! -e ~/ITK-BUILD ]; then
-        mkdir ~/ITK-BUILD &&
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ~/ITK &&
-        make -j2 --keep-going
-    fi
+  #- cd ~/googletest-build
+  #- sudo make install
+  #- if [ ! -e ~/json ]; then git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
+  #- cd ~/json/include
+  #- sudo ln -s nlohmann /usr/local/include
+  #- cd ~
+  #- if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ; fi
+  #- if [ ! -e ~/ITK ]; then git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git; fi
+  #- if [ ! -e ~/ITK-BUILD ]; then
+#        mkdir ~/ITK-BUILD &&
+#        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ~/ITK &&
+#        make -j2 --keep-going
+#    fi
 
 script:
   - pwd
