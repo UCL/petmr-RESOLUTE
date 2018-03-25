@@ -36,6 +36,7 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk && brew upgrade python; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install pip; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - pip install --upgrade pip
   - pip install conda
