@@ -146,7 +146,7 @@ public:
   void SetMaskImage(const TMaskImage* mask);
 
   void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
-  void SetOutputFileExtension (const std::string s);
+  void SetOutputFileExtension (const std::string &s);
   void SetJSONParams(const nlohmann::json &j);
 
   //mu-values (cm-1)
@@ -288,7 +288,7 @@ typename TMaskImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::
 }
 
 template< typename TInputImage, typename TMaskImage>
-void ResoluteImageFilter<TInputImage, TMaskImage>::SetOutputFileExtension(const std::string s)
+void ResoluteImageFilter<TInputImage, TMaskImage>::SetOutputFileExtension(const std::string &s)
 {
   if (s[0] != '.') {
     LOG(ERROR) << "Does not appear to be a valid extension!";

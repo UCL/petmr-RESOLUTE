@@ -472,7 +472,7 @@ public:
   typedef itk::GDCMImageIO ImageIOType;
 
   //DicomReader();
-  explicit ReadDicomSeries(std::vector<boost::filesystem::path> fileNames);
+  explicit ReadDicomSeries(std::vector<boost::filesystem::path> &fileNames);
 
   void Write(boost::filesystem::path outPath);
   void Read();
@@ -489,7 +489,7 @@ protected:
 
 //Constructor
 template <typename TImage>
-ReadDicomSeries<TImage>::ReadDicomSeries(std::vector<boost::filesystem::path> fileNames)
+ReadDicomSeries<TImage>::ReadDicomSeries(std::vector<boost::filesystem::path> &fileNames)
 {
 
   //Initialise ITK image and DICOM data structure.
