@@ -57,7 +57,7 @@ before_script:
   - sudo ln -s nlohmann /usr/local/include #step 2 to here
   - cd ~
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
-        git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK &&
+        git clone --branch=v4.12.2 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK &&
         mkdir -p ~/ITK-BUILD &&
         cd ~/ITK-BUILD &&
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ~/ITK &&
