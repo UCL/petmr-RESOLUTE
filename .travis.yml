@@ -60,13 +60,7 @@ before_script:
         git clone --branch=v4.12.2 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK &&
         mkdir -p ~/ITK-BUILD &&
         cd ~/ITK-BUILD &&
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DITKV3_COMPATIBILITY:BOOL=OFF \
-        -DITK_BUILD_DEFAULT_MODULES:BOOL=ON \
-        -DKWSYS_USE_MD5:BOOL=ON \ # Required by SlicerExecutionModel
-        -DITK_WRAPPING:BOOL=OFF \
-        -DModule_MGHIO:BOOL=ON \
-        -DModule_ITKReview:BOOL=ON \
-        ~/ITK &&
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
         make -j4 --keep-going;
     fi #step 3 to here
   - ls ~/ITK-BUILD
