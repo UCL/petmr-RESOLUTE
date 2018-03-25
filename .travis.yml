@@ -7,7 +7,6 @@ cache:
   - $HOME/antsbin
   - $HOME/googletest
   - $HOME/googletest-build
-  - $HOME/json
   - $HOME/ANTs
   - $HOME/ITK
   - $HOME/ITK-BUILD
@@ -55,12 +54,12 @@ before_script:
     fi
   - cd ~/googletest-build
   - sudo make install #step 1 to here
-  - if [ ! -e ~json/include/nlohmann ]; then git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
+  - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
   - cd ~/json/include
   - sudo ln -s nlohmann /usr/local/include #step 2 to here
-  #- cd ~
-  #- if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ; fi
-  #- if [ ! -e ~/ITK ]; then git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git; fi
+  - cd ~
+  - if [ ! -e ~/ANTs/CMakeLists.txt ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ; fi
+  - if [ ! -e ~/ITK/CMakeLists.txt ]; then git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git; fi #step 3 to here
   #- if [ ! -e ~/ITK-BUILD ]; then
 #        mkdir ~/ITK-BUILD &&
 #        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ~/ITK &&
