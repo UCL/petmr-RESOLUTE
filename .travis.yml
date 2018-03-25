@@ -34,7 +34,7 @@ matrix:
 
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew tap homebrew/homebrew-science && brew install ccache; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk insighttoolkit; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - git clone https://github.com/google/googletest
