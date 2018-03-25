@@ -20,6 +20,7 @@ addons:
       - libgtest-dev
       - libdcmtk2-dev
       - ccache
+      - libinsighttoolkit4-dev
 
 matrix:
   include:
@@ -35,24 +36,24 @@ before_script:
   - g++ --version
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk insighttoolkit; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - git clone https://github.com/google/googletest
   - cd googletest
   - cmake -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
+  - make -j4
   - sudo make install
   - cd ..
   - git clone --branch=v0.3.5 https://github.com/google/glog
   - cd glog
   - cmake  -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
+  - make -j4
   - sudo make install
   - cd ..
   - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
   - cd json
   - cmake  -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
+  - make -j4
   - sudo make install
   - cd ..
   - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs; fi
@@ -62,6 +63,6 @@ script:
     if [ ! -e ~/antsbin/ANTs-build ]; then
         if [ ! -e ~/antsbin ]; then mkdir ~/antsbin; fi
         cd ~/antsbin;
-        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF ~/ANTs && make -j2 --keep-going
+        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF -DUSE_SYSTEM_ITK=ON ~/ANTs && make -j4 --keep-going
     fi
-  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j2 && ctest --verbose
+  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j4 && ctest --verbose
