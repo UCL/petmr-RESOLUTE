@@ -89,7 +89,6 @@ inline float GetHUfromR2s(float r){
 
 inline float GetMU(float r){
   //Siemens 120 kVp slope. Carney et al. 2006
-  const float kVp = 120;
   const float a1 = 9.6e-5;
   const float b1 = 9.6e-2;
   const float a2 = 5.10e-5;
@@ -100,7 +99,7 @@ inline float GetMU(float r){
   float mu = 0.0;
   if ( hu <= breakPointHU)
     mu = a1 * hu + b1;
-  else if ( hu > breakPointHU)
+  else
     mu = a2 * (hu+1000) + b2;
 
   return mu;
@@ -147,7 +146,7 @@ public:
   void SetMaskImage(const TMaskImage* mask);
 
   void SetOutputDirectory(const boost::filesystem::path p){ _dstDir = p;};
-  void SetOutputFileExtension (const std::string s);
+  void SetOutputFileExtension (const std::string &s);
   void SetJSONParams(const nlohmann::json &j);
 
   //mu-values (cm-1)
@@ -229,6 +228,11 @@ ResoluteImageFilter<TInputImage,TMaskImage>
 ::ResoluteImageFilter()
 {
   this->SetNumberOfRequiredInputs(4);
+
+  //Initialise histogram coords.
+  _coords.x = 0;
+  _coords.y = 0;
+
 }
 
 template< typename TInputImage, typename TMaskImage>
@@ -284,7 +288,7 @@ typename TMaskImage::ConstPointer ResoluteImageFilter<TInputImage, TMaskImage>::
 }
 
 template< typename TInputImage, typename TMaskImage>
-void ResoluteImageFilter<TInputImage, TMaskImage>::SetOutputFileExtension(const std::string s)
+void ResoluteImageFilter<TInputImage, TMaskImage>::SetOutputFileExtension(const std::string &s)
 {
   if (s[0] != '.') {
     LOG(ERROR) << "Does not appear to be a valid extension!";
@@ -601,6 +605,9 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
   itk::ImageRegionIterator<TInputImage> r2sIt(_R2s,_R2s->GetLargestPossibleRegion());
   typedef itk::NeighborhoodIterator<TInputImage> NeighborhoodIteratorType;
 
+  itk::ImageRegionIterator<TInputImage> ute2It(_normUTE2,_normUTE2->GetLargestPossibleRegion());
+
+
   //3x3x3 neighbourhood
   typename NeighborhoodIteratorType::RadiusType radius;
   for (unsigned int i = 0; i < TInputImage::ImageDimension; ++i) 
@@ -613,18 +620,24 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::MakeR2s(){
 
   const float R2S_THRESHOLD = 10000;
 
-  for (it.Begin(); ! it.IsAtEnd(); ++it, ++r2sIt )
+  for (it.Begin(); ! it.IsAtEnd(); ++it, ++r2sIt, ++ute2It )
   {
-    float accum = 0.0;
-    int nV = 0;
-    if (r2sIt.Get() > R2S_THRESHOLD){
-      for (int i = 0; i < it.Size(); ++i){
-        if (it.GetPixel(i) <= R2S_THRESHOLD){
-          accum += it.GetPixel(i);
-          nV++;
+
+    if (ute2It.Get() > 1200 )
+      r2sIt.Set(0);
+    else {
+      if (r2sIt.Get() > R2S_THRESHOLD){
+        float accum = 0.0;
+        int nV = 0;
+
+        for (int i = 1; i < it.Size(); ++i){
+          if (it.GetPixel(i) <= R2S_THRESHOLD){
+            accum += it.GetPixel(i);
+            nV++;
+          }
         }
+        r2sIt.Set(accum/nV);
       }
-      r2sIt.Set(accum/nV);
     }
   }
 
@@ -911,7 +924,7 @@ void ResoluteImageFilter<TInputImage, TMaskImage>::ApplyAlgorithm(){
                   outIt.Set( SN_OVER_1600_MU );
                 else if (snUTEVal > 800)
                   outIt.Set( SN_800_1600_MU );
-                  else if (snUTEVal <= 800)
+                  else //snUTEVal <= 800 
                     outIt.Set( SN_BELOW_800_MU );
               }
             }

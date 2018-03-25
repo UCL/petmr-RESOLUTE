@@ -118,19 +118,19 @@ bool GetTagInfo(const gdcm::DataSet &ds, const gdcm::Tag tag, std::string &dst){
 class StudyTree {
 
 public:
-  StudyTree(){};
-  StudyTree(boost::filesystem::path rootPath){ _rootPath = rootPath; PopulateLists(); };
+  //StudyTree(){};
+  explicit StudyTree(boost::filesystem::path rootPath){ _rootPath = rootPath; PopulateLists(); };
 
   int GetNoOfStudies(){ return _studyList.size(); };
   std::string GetStudyUID( unsigned int pos );
 
-  int GetNoOfSeries(const std::string studyUID);
-  std::vector<std::string> GetSeriesUIDList(const std::string studyUID);
+  int GetNoOfSeries(const std::string &studyUID);
+  std::vector<std::string> GetSeriesUIDList(const std::string &studyUID);
 
-  unsigned int GetNoOfImages(const std::string seriesUID);
-  std::vector<nlohmann::json> GetInstanceList(const std::string seriesUID);
+  unsigned int GetNoOfImages(const std::string &seriesUID);
+  std::vector<nlohmann::json> GetInstanceList(const std::string &seriesUID);
 
-  std::vector<boost::filesystem::path> GetSeriesFileList(const std::string seriesUID);
+  std::vector<boost::filesystem::path> GetSeriesFileList(const std::string &seriesUID);
 
 
 protected:
@@ -139,7 +139,7 @@ protected:
   void AddStudyRecord(const gdcm::DataSet &ds);
   void AddSeriesRecord(const gdcm::DataSet &ds);
 
-  nlohmann::json GetSeriesRecord(const std::string seriesUID);
+  nlohmann::json GetSeriesRecord(const std::string &seriesUID);
 
   void GetBasicInstanceInfo(const gdcm::DataSet &ds, nlohmann::json &instance);
 
@@ -265,7 +265,7 @@ void StudyTree::AddInstanceRecord(const gdcm::DataSet &ds, const boost::filesyst
 
 }
 
-int StudyTree::GetNoOfSeries(const std::string studyUID){
+int StudyTree::GetNoOfSeries(const std::string &studyUID){
 
   int noFound = 0;
 
@@ -296,7 +296,7 @@ std::string StudyTree::GetStudyUID( unsigned int pos ){
 
 }
 
-std::vector<std::string> StudyTree::GetSeriesUIDList(const std::string studyUID){
+std::vector<std::string> StudyTree::GetSeriesUIDList(const std::string &studyUID){
 
   int noOfSeries = GetNoOfSeries(studyUID);
 
@@ -315,7 +315,7 @@ std::vector<std::string> StudyTree::GetSeriesUIDList(const std::string studyUID)
   return outList;
 }
 
-unsigned int StudyTree::GetNoOfImages(const std::string seriesUID){
+unsigned int StudyTree::GetNoOfImages(const std::string &seriesUID){
 
   unsigned int count=0;
 
@@ -326,7 +326,7 @@ unsigned int StudyTree::GetNoOfImages(const std::string seriesUID){
   return count;
 }
 
-nlohmann::json StudyTree::GetSeriesRecord(const std::string seriesUID){
+nlohmann::json StudyTree::GetSeriesRecord(const std::string &seriesUID){
 
   for (auto const& x : _seriesList){
     if (x["SeriesUID"] == seriesUID)
@@ -336,7 +336,7 @@ nlohmann::json StudyTree::GetSeriesRecord(const std::string seriesUID){
   return {};
 }
 
-std::vector<nlohmann::json> StudyTree::GetInstanceList(const std::string seriesUID){
+std::vector<nlohmann::json> StudyTree::GetInstanceList(const std::string &seriesUID){
 
   std::vector<nlohmann::json> outList;
 
@@ -348,7 +348,7 @@ std::vector<nlohmann::json> StudyTree::GetInstanceList(const std::string seriesU
   return outList;
 }
 
-std::vector<boost::filesystem::path> StudyTree::GetSeriesFileList(const std::string seriesUID){
+std::vector<boost::filesystem::path> StudyTree::GetSeriesFileList(const std::string &seriesUID){
   
   std::vector<boost::filesystem::path> outList;
 
@@ -367,15 +367,15 @@ std::vector<boost::filesystem::path> StudyTree::GetSeriesFileList(const std::str
 class UTETree : public StudyTree {
  
 public:
-  UTETree(boost::filesystem::path rootPath){ _rootPath = rootPath; PopulateLists(); };
+  explicit UTETree(boost::filesystem::path rootPath): StudyTree(rootPath){ _rootPath = rootPath; PopulateLists(); };
 
-  std::string FindMuMapUID(const std::string studyUID, const std::string tag);
-  std::string FindUTEUID(const std::string studyUID, const std::string tag, const std::string TE);
+  std::string FindMuMapUID(const std::string &studyUID, const std::string &tag);
+  std::string FindUTEUID(const std::string &studyUID, const std::string &tag, const std::string &TE);
 
 protected:
   void AddInstanceRecord(const gdcm::DataSet &ds, const boost::filesystem::path pth) override; 
 
-  bool CheckSeriesTE(const std::string seriesUID, const std::string TE);
+  bool CheckSeriesTE(const std::string &seriesUID, const std::string &TE);
 
 };
 
@@ -395,7 +395,7 @@ void UTETree::AddInstanceRecord(const gdcm::DataSet &ds, const boost::filesystem
 
 }
 
-std::string UTETree::FindMuMapUID(const std::string studyUID, const std::string tag){
+std::string UTETree::FindMuMapUID(const std::string &studyUID, const std::string &tag){
 
   std::vector<std::string> seriesToEval = GetSeriesUIDList(studyUID);
 
@@ -420,7 +420,7 @@ std::string UTETree::FindMuMapUID(const std::string studyUID, const std::string 
   return "";
 }
 
-bool UTETree::CheckSeriesTE(const std::string seriesUID, const std::string TE){
+bool UTETree::CheckSeriesTE(const std::string &seriesUID, const std::string &TE){
 
   std::vector<nlohmann::json> instList = GetInstanceList(seriesUID);
 
@@ -432,7 +432,7 @@ bool UTETree::CheckSeriesTE(const std::string seriesUID, const std::string TE){
   return true;
 }
 
-std::string UTETree::FindUTEUID(const std::string studyUID, const std::string tag, const std::string TE){
+std::string UTETree::FindUTEUID(const std::string &studyUID, const std::string &tag, const std::string &TE){
 
   std::vector<std::string> seriesToEval = GetSeriesUIDList(studyUID);
 
@@ -472,7 +472,7 @@ public:
   typedef itk::GDCMImageIO ImageIOType;
 
   //DicomReader();
-  ReadDicomSeries(std::vector<boost::filesystem::path> fileNames);
+  explicit ReadDicomSeries(std::vector<boost::filesystem::path> &fileNames);
 
   void Write(boost::filesystem::path outPath);
   void Read();
@@ -489,7 +489,7 @@ protected:
 
 //Constructor
 template <typename TImage>
-ReadDicomSeries<TImage>::ReadDicomSeries(std::vector<boost::filesystem::path> fileNames)
+ReadDicomSeries<TImage>::ReadDicomSeries(std::vector<boost::filesystem::path> &fileNames)
 {
 
   //Initialise ITK image and DICOM data structure.

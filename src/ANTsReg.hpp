@@ -55,7 +55,7 @@ public:
 
   void SetParams(const nlohmann::json &params);
   void SetOutputDirectory(const boost::filesystem::path outDir);
-  void SetOutputPrefix(const std::string s){ _prefix = s; };
+  void SetOutputPrefix(const std::string &s){ _prefix = s; };
   void SetReferenceFileName(const boost::filesystem::path refFileName);
   void SetFloatingFileName(const boost::filesystem::path floatFileName);
 
