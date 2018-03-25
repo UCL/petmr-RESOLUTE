@@ -20,7 +20,8 @@ addons:
       - libgtest-dev
       - libdcmtk2-dev
       - ccache
-      - python3
+      - python
+      - wget
 
 matrix:
   include:
@@ -35,12 +36,16 @@ matrix:
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk && brew upgrade python; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
-  - curl -0 https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-  - python get-pip.py --user
-  - sudo pip install --upgrade pip
-  - sudo pip install conda
+  - if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
   - conda install -c conda-forge itk
   - git clone https://github.com/google/googletest
   - cd googletest
