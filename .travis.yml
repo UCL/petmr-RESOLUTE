@@ -60,9 +60,10 @@ before_script:
         git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK &&
         mkdir -p ~/ITK-BUILD &&
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ~/ITK &&
-        make -j4 --keep-going
-    fi
-  #- if [ ! -e ~/ANTs/CMakeLists.txt ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ; fi
+        make -j4 --keep-going;
+    fi #step 3 to here
+  #- if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
+#        git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTS
 
 
 script:
