@@ -20,7 +20,7 @@ addons:
       - libgtest-dev
       - libdcmtk2-dev
       - ccache
-      - python
+      - python3
 
 matrix:
   include:
@@ -35,7 +35,7 @@ matrix:
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk python; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk python && brew upgrade python; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - pip install conda
   - conda install -c conda-forge itk
