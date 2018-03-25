@@ -50,6 +50,11 @@ before_script:
   - sudo ln -s nlohmann /usr/local/include
   - cd ../..
   - if [ ! -e ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ; fi
+  - if [ ! -e ITK ]; then git clone --branch=v4.13.0 https://github.com/InsightSoftwareConsortium/ITK.git; fi
+  - if [ ! -e ITK-BUILD ]; then
+        mkdir ITK-BUILD &&
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ../ITK; 
+    fi
 
 script:
   - pwd
