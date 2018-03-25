@@ -47,7 +47,7 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - if [ ! -d ~/googletest ]; then git clone https://github.com/google/googletest; fi
   - if [ ! -d ~/googletest-build/bin ]; then
-        mkdir ~/googletest-build &&
+        mkdir -p ~/googletest-build &&
         cd ~/googletest-build &&
         cmake -DCMAKE_BUILD_TYPE=Release ~/googletest &&
         make -j4;
