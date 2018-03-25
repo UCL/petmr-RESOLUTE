@@ -46,16 +46,15 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - ls ~
-  - if [ ! -d /usr/local/include/gtest ]; then
+  - if [ ! -e ~/googletest-build/install_manifest.txt ]; then
         git clone https://github.com/google/googletest ~/googletest &&
         mkdir -p ~/googletest-build &&
         cd ~/googletest-build &&
         cmake -DCMAKE_BUILD_TYPE=Release ~/googletest &&
-        make -j4 &&
-        sudo make install
+        make -j4;
     fi
-  #- cd ~/googletest-build
-  #- sudo make install
+  - cd ~/googletest-build
+  - sudo make install
   #- if [ ! -e ~/json ]; then git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json; fi
   #- cd ~/json/include
   #- sudo ln -s nlohmann /usr/local/include
