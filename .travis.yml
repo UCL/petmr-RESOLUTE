@@ -8,6 +8,7 @@ cache:
   - $HOME/googletest
   - $HOME/googletest-build
   - $HOME/ITK-BUILD
+  - $HOME/ITK-INSTALL
 
 addons:
   apt:
@@ -59,21 +60,20 @@ before_script:
   - git clone --branch=v4.12.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
         cd ~/ITK &&
-        mkdir -p ~/ITK-BUILD &&
+        mkdir -p ~/ITK-BUILD && mkdir -p ~/ITK-INSTALL
         cd ~/ITK-BUILD &&
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
-        make -j4 --keep-going;
+        cmake -DCMAKE_INSTALL_PREFIX=~/ITK-INSTALL -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
+        make -j4 --keep-going && make install;
     fi #step 3 to here
-  - ls ~/ITK-BUILD
-  - cd ~/ITK-BUILD
-  - sudo make install
-  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
-  - if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
-        mkdir -p ~/ANTS-BUILD &&
-        cd ~/ANTS-BUILD &&
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON ~/ANTs && make -j4 --keep-going;
-    fi #step 4 to here
-    
+  - ls ~/ITK-INSTALL
+  #- cd ~/ITK-BUILD
+  #- git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
+  #- if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
+#        mkdir -p ~/ANTS-BUILD &&
+#        cd ~/ANTS-BUILD &&
+#        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON -DITK_DIR=~/INSTALL ~/ANTs && make -j4 --keep-going;
+#    fi #step 4 to here
+
 script:
   - pwd
   - ls
