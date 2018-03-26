@@ -66,15 +66,12 @@ before_script:
         make -j4 --keep-going;
     fi #step 3 to here
   - ls ~/ITK-BUILD
-  #- if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
-    #    git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs &&
-    #    mkdir -p ~/ANTS-BUILD &&
-    #    cd ~/ANTS-BUILD &&
-    #    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON
-
-
-    #    -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF -DUSE_SYSTEM_ITK=ON -DITK_DIR=$HOME/ITK-BUILD ~/ANTs && make -j4 --keep-going;
-    #fi #step 4 to here
+  - if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
+        git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs &&
+        mkdir -p ~/ANTS-BUILD &&
+        cd ~/ANTS-BUILD &&
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON -DITK_DIR=$HOME/ITK-BUILD ~/ANTs && make -j4 --keep-going;
+    fi #step 4 to here
 
 
 
