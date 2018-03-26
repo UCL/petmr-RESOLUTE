@@ -58,6 +58,7 @@ before_script:
   - cd ~
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
         git clone https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK &&
+        cd ~/ITK &&
         git checkout c5138560409c75408ff76bccff938f21e5dcafc6 &&
         mkdir -p ~/ITK-BUILD &&
         cd ~/ITK-BUILD &&
