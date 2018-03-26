@@ -56,8 +56,8 @@ before_script:
   - cd ~/json/include
   - sudo ln -s nlohmann /usr/local/include #step 2 to here
   - cd ~
+  - git clone https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
-        git clone https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK &&
         cd ~/ITK &&
         git checkout c5138560409c75408ff76bccff938f21e5dcafc6 &&
         mkdir -p ~/ITK-BUILD &&
@@ -66,8 +66,8 @@ before_script:
         make -j4 --keep-going;
     fi #step 3 to here
   - ls ~/ITK-BUILD
+  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs &&
   - if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
-        git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs &&
         mkdir -p ~/ANTS-BUILD &&
         cd ~/ANTS-BUILD &&
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON -DITK_DIR=$HOME/ITK-BUILD ~/ANTs && make -j4 --keep-going;
