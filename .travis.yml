@@ -66,7 +66,7 @@ before_script:
         make -j4 --keep-going;
     fi #step 3 to here
   - ls ~/ITK-BUILD
-  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs &&
+  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
         mkdir -p ~/ANTS-BUILD &&
         cd ~/ANTS-BUILD &&
