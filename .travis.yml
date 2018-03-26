@@ -56,10 +56,10 @@ before_script:
   - cd ~/json/include
   - sudo ln -s nlohmann /usr/local/include #step 2 to here
   - cd ~
-  - git clone https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
+  - git clone --branch=v4.12.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
         cd ~/ITK &&
-        git checkout c5138560409c75408ff76bccff938f21e5dcafc6 &&
+        #git checkout c5138560409c75408ff76bccff938f21e5dcafc6 &&
         mkdir -p ~/ITK-BUILD &&
         cd ~/ITK-BUILD &&
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
@@ -67,13 +67,13 @@ before_script:
     fi #step 3 to here
   - ls ~/ITK-BUILD
   - cd ~/ITK-BUILD
-  - make install
-  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
-  - if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
-        mkdir -p ~/ANTS-BUILD &&
-        cd ~/ANTS-BUILD &&
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON ~/ANTs && make -j4 --keep-going;
-    fi #step 4 to here
+  - sudo make install
+  #- git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
+  #- if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
+#        mkdir -p ~/ANTS-BUILD &&
+#        cd ~/ANTS-BUILD &&
+#        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON ~/ANTs && make -j4 --keep-going;
+#    fi #step 4 to here
 
 
 
