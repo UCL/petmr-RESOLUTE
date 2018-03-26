@@ -60,7 +60,7 @@ before_script:
   - git clone --branch=v4.12.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
         cd ~/ITK &&
-        mkdir -p ~/ITK-BUILD && mkdir -p ~/ITK-INSTALL
+        mkdir -p ~/ITK-BUILD && mkdir -p ~/ITK-INSTALL &&
         cd ~/ITK-BUILD &&
         cmake -DCMAKE_INSTALL_PREFIX=~/ITK-INSTALL -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
         make -j4 --keep-going && make install;
