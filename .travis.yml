@@ -63,8 +63,8 @@ before_script:
   - cd ~/googletest-build
   - sudo make install #step 1 to here
   - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json
-  - cd ~/json/include
-  - sudo ln -s nlohmann /usr/local/include #step 2 to here
+  - cd ~/json
+  - sudo make install #step 2 to here
   - cd ~
   - git clone --branch=v4.12.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
   - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
