@@ -4,7 +4,7 @@ sudo: true
 
 cache:
 - directories:
-  - $HOME/googletest
+  - $HOME/glog-build
   - $HOME/googletest-build
   - $HOME/ITK-BUILD
   - $HOME/ITK-INSTALL
@@ -44,12 +44,21 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - ls ~
+  - if [ ! -e ~/glog-build/install_manifest.txt ]; then
+        git clone https://github.com/google/glog ~/glog &&
+        mkdir -p ~/glog-build &&
+        cd ~/glog-build &&
+        cmake -DCMAKE_BUILD_TYPE=Release ~/glog-build &&
+        make -j2;
+      fi
+  - cd ~/glog-build
+  - sudo make install #step 1 to here
   - if [ ! -e ~/googletest-build/install_manifest.txt ]; then
         git clone https://github.com/google/googletest ~/googletest &&
         mkdir -p ~/googletest-build &&
         cd ~/googletest-build &&
         cmake -DCMAKE_BUILD_TYPE=Release ~/googletest &&
-        make -j4;
+        make -j2;
     fi
   - cd ~/googletest-build
   - sudo make install #step 1 to here
@@ -63,7 +72,7 @@ before_script:
         mkdir -p ~/ITK-BUILD && mkdir -p ~/ITK-INSTALL &&
         cd ~/ITK-BUILD &&
         cmake -DCMAKE_INSTALL_PREFIX=~/ITK-INSTALL -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
-        make -j4 --keep-going && make install;
+        make -j2 --keep-going && make install;
     fi #step 3 to here
   - ls ~/ITK-INSTALL
   - cd ~/ITK-BUILD
@@ -76,4 +85,4 @@ before_script:
 
 script:
   - ls ~/ANTS-BUILD
-  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j4 && ctest --verbose
+  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j2 && ctest --verbose
