@@ -48,7 +48,7 @@ before_script:
         git clone https://github.com/google/glog ~/glog &&
         mkdir -p ~/glog-build &&
         cd ~/glog-build &&
-        cmake -DCMAKE_BUILD_TYPE=Release ~/glog-build &&
+        cmake -DCMAKE_BUILD_TYPE=Release ~/glog &&
         make -j2;
       fi
   - cd ~/glog-build
