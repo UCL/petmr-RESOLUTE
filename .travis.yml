@@ -44,8 +44,8 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - ls ~
+  - git clone https://github.com/google/glog ~/glog
   - if [ ! -e ~/glog-build/install_manifest.txt ]; then
-        git clone https://github.com/google/glog ~/glog &&
         mkdir -p ~/glog-build &&
         cd ~/glog-build &&
         cmake -DCMAKE_BUILD_TYPE=Release ~/glog &&
@@ -53,8 +53,8 @@ before_script:
       fi
   - cd ~/glog-build
   - sudo make install #step 1 to here
+  - git clone https://github.com/google/googletest ~/googletest
   - if [ ! -e ~/googletest-build/install_manifest.txt ]; then
-        git clone https://github.com/google/googletest ~/googletest &&
         mkdir -p ~/googletest-build &&
         cd ~/googletest-build &&
         cmake -DCMAKE_BUILD_TYPE=Release ~/googletest &&
