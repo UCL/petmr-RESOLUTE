@@ -75,14 +75,6 @@ before_script:
     fi #step 4 to here
 
 script:
-  - pwd
-  - ls
-  - ls /usr/local/include
-
-#  - |
-#    if [ ! -e ~/antsbin/ANTs-build ]; then
-#        if [ ! -e ~/antsbin ]; then mkdir ~/antsbin; fi
-#        cd ~/antsbin;
-#        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF -DUSE_SYSTEM_ITK=ON ~/ANTs && make -j4 --keep-going
-#    fi
-#  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j4 && ctest --verbose
+  - ls ~/ANTS-BUILD
+  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/ANTS-BUILD/lib && make -j4 && ctest --verbose
+  
