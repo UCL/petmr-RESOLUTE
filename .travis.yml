@@ -4,7 +4,11 @@ sudo: true
 
 cache:
 - directories:
-  - $HOME/antsbin
+  - $HOME/glog-build
+  - $HOME/googletest-build
+  - $HOME/ITK-BUILD
+  - $HOME/ITK-INSTALL
+  - $HOME/ANTS-BUILD
 
 addons:
   apt:
@@ -20,6 +24,9 @@ addons:
       - libgtest-dev
       - libdcmtk2-dev
       - ccache
+      - libgflags-dev
+      - libgoogle-glog-dev
+      - wget
 
 matrix:
   include:
@@ -32,36 +39,42 @@ matrix:
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
 
 before_script:
-  - g++ --version
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache glog ; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
-  - git clone https://github.com/google/googletest
-  - cd googletest
-  - cmake -DCMAKE_BUILD_TYPE=Release .
+  - ls ~
+  - git clone https://github.com/google/glog ~/glog
+  - if [ ! -e ~/glog-build/install_manifest.txt ]; then
+        mkdir -p ~/glog-build &&
+        cd ~/glog-build &&
+        cmake -DCMAKE_BUILD_TYPE=Release ~/glog &&
+        make -j2;
+      fi
+  - cd ~/glog-build
+  - sudo make install #step 1 to here
+  - git clone --branch=release-1.8.0 https://github.com/google/googletest ~/googletest
+  - if [ ! -e ~/googletest-build/install_manifest.txt ]; then
+        mkdir -p ~/googletest-build &&
+        cd ~/googletest-build &&
+        cmake -DCMAKE_BUILD_TYPE=Release ~/googletest &&
+        make -j2;
+    fi
+  - cd ~/googletest-build
+  - sudo make install #step 1 to here
+  - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json
+  - cd ~/json
+  - cmake  -DBUILD_TESTING=OFF .
   - make -j2
-  - sudo make install
-  - cd ..
-  - git clone --branch=v0.3.5 https://github.com/google/glog
-  - cd glog
-  - cmake  -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
-  - sudo make install
-  - cd ..
-  - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git
-  - cd json
-  - cmake  -DCMAKE_BUILD_TYPE=Release .
-  - make -j2
-  - sudo make install
-  - cd ..
-  - if [ ! -e ~/ANTs ]; then git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs; fi
+  - sudo make install #step 2 to here
+  - cd ~
+  - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
+  - if [ ! -e ~/ANTS-BUILD/ANTS-build ]; then
+        mkdir -p ~/ANTS-BUILD &&
+        cd ~/ANTS-BUILD &&
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF ~/ANTs && make -j2 --keep-going;
+    fi #step 4 to here
 
 script:
-  - |
-    if [ ! -e ~/antsbin/ANTs-build ]; then
-        if [ ! -e ~/antsbin ]; then mkdir ~/antsbin; fi
-        cd ~/antsbin;
-        cmake -DCMAKE_BUILD_TYPE=Release -DRUN_LONG_TESTS=OFF -DRUN_SHORT_TESTS=OFF ~/ANTs && make -j2 --keep-going
-    fi
-  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=~/antsbin/ITKv4-build -DANTs_SOURCE_DIR=~/ANTs -DANTs_LIBRARY_DIR=~/antsbin/lib && make -j2 && ctest --verbose
+  - ls ~/ANTS-BUILD
+  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j2 && ctest --verbose
