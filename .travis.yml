@@ -68,18 +68,8 @@ before_script:
   - make -j2
   - sudo make install #step 2 to here
   - cd ~
-  - git clone --branch=v4.12.0 https://github.com/InsightSoftwareConsortium/ITK.git ~/ITK
-  - if [ ! -e ~/ITK-BUILD/ITKConfig.cmake ]; then
-        cd ~/ITK &&
-        mkdir -p ~/ITK-BUILD && mkdir -p ~/ITK-INSTALL &&
-        cd ~/ITK-BUILD &&
-        cmake -DCMAKE_INSTALL_PREFIX=~/ITK-INSTALL -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DITK_LEGACY_REMOVE:BOOL=ON -DITK_FUTURE_LEGACY_REMOVE:BOOL=ON -DITKV3_COMPATIBILITY:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKReview:BOOL=ON ~/ITK &&
-        make -j2 --keep-going && make install;
-    fi #step 3 to here
-  - ls ~/ITK-INSTALL
-  - cd ~/ITK-BUILD
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
-  - if [ ! -e ~/ANTS-BUILD/ANTS-build ]; then
+  - if [ ! -e ~/ANTS-BUILD/ANTs-build ]; then
         mkdir -p ~/ANTS-BUILD &&
         cd ~/ANTS-BUILD &&
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF -DUSE_SYSTEM_ITK=ON -DITK_DIR=$HOME/ITK-INSTALL ~/ANTs && make -j2 --keep-going;
