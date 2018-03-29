@@ -1,8 +1,8 @@
 add_executable(test_reg test_registration.cpp ${ANTs_SOURCE_DIR}/Examples/antsRegistration.cxx )
 target_link_libraries(test_reg 
+      ${ANTS_LIBS}
       ${ITK_LIBRARIES}  
       ${Boost_LIBRARIES}
-      ${ANTS_LIBS}
       glog 
       nlohmann_json
     )
@@ -21,9 +21,9 @@ file(GLOB SRCS
 add_executable(testRESOLUTE ${SRCS})
 
 target_link_libraries(testRESOLUTE
+  ${ANTS_LIBS}
   ${ITK_LIBRARIES}  
   ${Boost_LIBRARIES}
-  ${ANTS_LIBS}
   gtest
   gmock
   glog 
