@@ -53,7 +53,7 @@ before_script:
       fi
   - cd ~/glog-build
   - sudo make install #step 1 to here
-  - git clone https://github.com/google/googletest ~/googletest
+  - git clone --branch=release-1.8.0 https://github.com/google/googletest ~/googletest
   - if [ ! -e ~/googletest-build/install_manifest.txt ]; then
         mkdir -p ~/googletest-build &&
         cd ~/googletest-build &&
