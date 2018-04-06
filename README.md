@@ -16,7 +16,7 @@ If you use the RESOLUTE pCT approach in your work, please cite the following pap
 
 ## Template and mask images
 The images that are required to run this application are available on Zenodo:
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1204197.svg)](https://doi.org/10.5281/zenodo.1204197)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1214155.svg)](https://doi.org/10.5281/zenodo.1214155)
 
 Please extract the zip and amend the JSON file as described below.
 
