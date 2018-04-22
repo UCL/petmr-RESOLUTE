@@ -65,7 +65,7 @@ before_script:
   - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json
   - cd ~/json
   - cmake  -DBUILD_TESTING=OFF .
-  - make -j2
+  - make clean && make -j2
   - sudo make install #step 2 to here
   - cd ~
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
