@@ -41,6 +41,7 @@ matrix:
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache glog ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew tap nlohmann/json && brew install nlohmann_json ; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - ls ~
@@ -62,11 +63,13 @@ before_script:
     fi
   - cd ~/googletest-build
   - sudo make install #step 1 to here
-  - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json
-  - cd ~/json
-  - cmake  -DBUILD_TESTING=OFF .
-  - sudo make -j2
-  - sudo make install #step 2 to here
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+        git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json
+        cd ~/json
+        cmake  -DBUILD_TESTING=OFF .
+        sudo make -j2
+        sudo make install #step 2 to here
+    fi
   - cd ~
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - if [ ! -e ~/ANTS-BUILD/ANTS-build ]; then
