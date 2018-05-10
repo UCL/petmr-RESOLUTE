@@ -349,18 +349,22 @@ std::vector<nlohmann::json> StudyTree::GetInstanceList(const std::string &series
 }
 
 std::vector<boost::filesystem::path> StudyTree::GetSeriesFileList(const std::string &seriesUID){
-  
-  std::vector<boost::filesystem::path> outList;
+
+  const int totalNoSlices = GetNoOfImages(seriesUID);
+  DLOG(INFO) << totalNoSlices << " in " << seriesUID;
+
+  std::vector<boost::filesystem::path> outList(totalNoSlices);
 
   for (auto const& i: _instanceList){
     if (i["SeriesUID"] == seriesUID){
       std::string path = i["FilePath"];
-      //DLOG(INFO) << "\t : " << path; 
-      outList.push_back(path);    
+      int n = i["ImageNo"];
+      DLOG(INFO) << "Image no. " << n << "\t : " << path;
+      outList[n-1]=path;
     }
   }
 
-  return outList; 
+  return outList;
 }
 
 

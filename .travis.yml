@@ -2,14 +2,6 @@ language: generic
 
 sudo: true
 
-cache:
-- directories:
-  - $HOME/glog-build
-  - $HOME/googletest-build
-  - $HOME/ITK-BUILD
-  - $HOME/ITK-INSTALL
-  - $HOME/ANTS-BUILD
-
 addons:
   apt:
     sources:
@@ -23,7 +15,6 @@ addons:
       - libboost-all-dev
       - libgtest-dev
       - libdcmtk2-dev
-      - ccache
       - libgflags-dev
       - libgoogle-glog-dev
       - wget
@@ -39,10 +30,9 @@ matrix:
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
 
 before_script:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ];  then echo "need cmake 3.2"; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install ccache glog ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then echo "need cmake 3.2"; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install glog ; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
   - ls ~
   - git clone https://github.com/google/glog ~/glog
   - if [ ! -e ~/glog-build/install_manifest.txt ]; then
@@ -64,9 +54,9 @@ before_script:
   - sudo make install #step 1 to here
   - git clone --branch=v3.1.1 https://github.com/nlohmann/json.git ~/json
   - cd ~/json
-  - cmake  -DBUILD_TESTING=OFF .
+  - cmake -DBUILD_TESTING=OFF .
   - make -j2
-  - sudo make install #step 2 to here
+  - sudo make install
   - cd ~
   - git clone --branch=v2.2.0 https://github.com/ANTsX/ANTs.git ~/ANTs
   - if [ ! -e ~/ANTS-BUILD/ANTS-build ]; then
