@@ -16,7 +16,7 @@ If you use the RESOLUTE pCT approach in your work, please cite the following pap
 
 ## Template and mask images
 The images that are required to run this application are available on Zenodo:
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1214155.svg)](https://doi.org/10.5281/zenodo.1214155)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1204196.svg)](https://doi.org/10.5281/zenodo.1204196)
 
 Please extract the zip and amend the JSON file as described below.
 
@@ -51,7 +51,7 @@ The skeleton will look like this:
     "version": "0.0.1"
 }
 ```
-Fill in the desired output directory in the variable `destDir`, and the path to the registration template `manifest.yaml` in `regTemplatePath`, e.g.
+Fill in the desired output directory in the variable `destDir`, and the path to the registration template `manifest.json` in `regTemplatePath`, e.g.
 ```yaml
 {
     "MRACSeriesName": "Head_MRAC_PET_UTE_UMAP",
@@ -64,7 +64,7 @@ Fill in the desired output directory in the variable `destDir`, and the path to 
     "destFileType": ".nii.gz",
     "logDir": "./logs",
     "regName": "ANTS",
-    "regTemplatePath": "/path/to/template/manifest.yaml",
+    "regTemplatePath": "/path/to/template/manifest.json",
     "regArgs": "3 -m CC[<%%REF%%>,<%%FLOAT%%>,1,4] -i 10x5x2 -o <%%PREFIX%%> -t SyN[0.5] -r Gauss[3,0] -G",
     "version": "0.0.1"
 }
