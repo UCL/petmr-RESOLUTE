@@ -63,7 +63,7 @@ void TemplateController::SetPath(const boost::filesystem::path &pth){
   else {
     if (boost::filesystem::is_directory(pth)){
       tempPath = pth;
-      tempPath /= "manifest.yaml";
+      tempPath /= "manifest.json";
     }
   }
 
