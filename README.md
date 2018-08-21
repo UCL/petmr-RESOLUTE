@@ -1,6 +1,6 @@
 # petmr-RESOLUTE
 
-[![Build Status](https://travis-ci.org/UCL/petmr-RESOLUTE.svg?branch=master)](https://travis-ci.org/UCL/petmr-RESOLUTE)[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bc66119aefae4628a914e01a2a6f83fa)](https://www.codacy.com/app/bathomas/petmr-RESOLUTE?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=UCL/petmr-RESOLUTE&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/UCL/petmr-RESOLUTE.svg?branch=master)](https://travis-ci.org/UCL/petmr-RESOLUTE) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bc66119aefae4628a914e01a2a6f83fa)](https://www.codacy.com/app/bathomas/petmr-RESOLUTE?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=UCL/petmr-RESOLUTE&amp;utm_campaign=Badge_Grade) [![DOI](https://zenodo.org/badge/123155931.svg)](https://zenodo.org/badge/latestdoi/123155931)
 
 Implementation of the RESOLUTE pseudo-CT (pCT) method for the Siemens mMR.
 
