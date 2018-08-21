@@ -6,8 +6,7 @@ matrix:
   include:
   - os: osx
     compiler: gcc
-    env:
-        - MATRIX_EVAL="brew install gcc5 && CC=gcc-5 && CXX=g++-5"
+    env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
   - os: linux
     compiler: gcc
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
@@ -29,7 +28,7 @@ addons:
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then echo "need cmake 3.2"; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install glog ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install glog gcc5; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew upgrade cmake; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
 
