@@ -5,7 +5,8 @@ sudo: true
 matrix:
   include:
   - os: osx
-    compiler: clang
+    compiler: gcc
+    env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
   - os: linux
     compiler: gcc
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
@@ -13,7 +14,6 @@ matrix:
 addons:
   apt:
     sources:
-      - george-edison55-precise-backports
       - ubuntu-toolchain-r-test
     packages:
       - cmake
