@@ -59,7 +59,7 @@ before_script:
   - if [ ! -e ~/ANTS-BUILD/ANTS-build ]; then
         mkdir -p ~/ANTS-BUILD &&
         cd ~/ANTS-BUILD &&
-        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF ~/ANTs && make -j2 --keep-going;
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING:BOOL=OFF ~/ANTs && make -j2;
     fi #step 4 to here
 
 script:
