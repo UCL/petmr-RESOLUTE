@@ -2,16 +2,21 @@ language: generic
 
 sudo: true
 
+os:
+    - linux
+    - osx
+
+compiler:
+    - clang
+    - gcc
+
 addons:
   apt:
     sources:
       - george-edison55-precise-backports
-      - llvm-toolchain-precise-3.8
-      - ubuntu-toolchain-r-test
     packages:
       - cmake
       - cmake-data
-      - g++-5
       - libboost-all-dev
       - libgtest-dev
       - libdcmtk2-dev
@@ -19,21 +24,13 @@ addons:
       - libgoogle-glog-dev
       - wget
 
-matrix:
-  include:
-  - os: osx
-    compiler: clang
-  - os: osx
-    compiler: gcc
-  - os: linux
-    compiler: gcc
-    env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
-
-before_script:
+before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install glog ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew upgrade cmake; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
-  - ls ~
+
+before_script:
   - git clone https://github.com/google/glog ~/glog
   - if [ ! -e ~/glog-build/install_manifest.txt ]; then
         mkdir -p ~/glog-build &&
