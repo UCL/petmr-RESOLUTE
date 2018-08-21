@@ -5,8 +5,8 @@ sudo: true
 matrix:
   include:
   - os: osx
-    compiler: gcc
-    env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
+    osx_image: xcode9.1
+    compiler: clang
   - os: linux
     compiler: gcc
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
@@ -29,8 +29,6 @@ addons:
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then echo "need cmake 3.2"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update && brew install glog; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then sudo rm '/usr/local/include/c++'; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install gcc@5 && brew link --overwrite gcc@5; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew upgrade cmake; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install dcmtk; fi
 
@@ -68,4 +66,4 @@ before_script:
 
 script:
   - ls ~/ANTS-BUILD
-  - cd ~/build/UCL/petmr-RESOLUTE && cmake CC=gcc-5 CXX=g++-5 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j2 && ctest --verbose
+  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j2 && ctest --verbose
