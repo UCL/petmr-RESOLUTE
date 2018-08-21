@@ -67,4 +67,4 @@ before_script:
 
 script:
   - ls ~/ANTS-BUILD
-  - cd ~/build/UCL/petmr-RESOLUTE && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j2 && ctest --verbose
+  - cd ~/build/UCL/petmr-RESOLUTE && cmake CC=gcc-5 CXX=g++-5 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DITK_DIR=$HOME/ANTS-BUILD/ITKv4-build -DANTs_SOURCE_DIR=$HOME/ANTs -DANTs_LIBRARY_DIR=$HOME/ANTS-BUILD/lib && make -j2 && ctest --verbose
