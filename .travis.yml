@@ -2,13 +2,13 @@ language: generic
 
 sudo: true
 
-os:
-    - linux
-    - osx
-
-compiler:
-    - clang
-    - gcc
+matrix:
+  include:
+  - os: osx
+    compiler: clang
+  - os: linux
+    compiler: gcc
+    env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
 
 addons:
   apt:
@@ -17,6 +17,7 @@ addons:
     packages:
       - cmake
       - cmake-data
+      - g++-5
       - libboost-all-dev
       - libgtest-dev
       - libdcmtk2-dev
